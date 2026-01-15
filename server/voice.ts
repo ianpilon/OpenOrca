@@ -95,6 +95,16 @@ export function setupVoiceWebSocket(httpServer: Server) {
           return;
         }
         
+        // Log session.updated details to verify VAD config
+        if (message.type === "session.updated") {
+          log(`Session updated - turn_detection: ${JSON.stringify(message.session?.turn_detection || 'none')}`, "voice");
+        }
+        
+        // Log any errors
+        if (message.type === "error") {
+          log(`xAI ERROR: ${JSON.stringify(message.error)}`, "voice");
+        }
+        
         // When speech starts, log it
         if (message.type === "input_audio_buffer.speech_started") {
           log("Speech started - waiting for speech to stop", "voice");
