@@ -1,8 +1,21 @@
-// Use realistic placeholder avatars from UI Avatars service
+// Import realistic synthetic human avatars
+import avatar1 from '@assets/generated_images/asian_male_professional_headshot.png';
+import avatar2 from '@assets/generated_images/black_female_professional_headshot.png';
+import avatar3 from '@assets/generated_images/caucasian_male_professional_headshot.png';
+import avatar4 from '@assets/generated_images/south_asian_female_professional_headshot.png';
+import avatar5 from '@assets/generated_images/hispanic_male_professional_headshot.png';
+import avatar6 from '@assets/generated_images/east_asian_female_with_glasses_headshot.png';
+import avatar7 from '@assets/generated_images/black_male_senior_professional_headshot.png';
+import avatar8 from '@assets/generated_images/caucasian_female_professional_headshot.png';
+import avatar9 from '@assets/generated_images/middle_eastern_male_professional_headshot.png';
+import avatar10 from '@assets/generated_images/mixed-race_female_creative_professional.png';
+
+const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7, avatar8, avatar9, avatar10];
+
 const getAvatarUrl = (name: string) => {
-  const colors = ['0D8ABC', '6366F1', '8B5CF6', 'EC4899', '10B981', 'F59E0B', 'EF4444', '06B6D4'];
-  const color = colors[Math.abs(name.charCodeAt(0) + name.charCodeAt(name.length - 1)) % colors.length];
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff&size=128&bold=true`;
+  // Use name to deterministically pick an avatar
+  const index = Math.abs(name.charCodeAt(0) + name.charCodeAt(name.length - 1)) % avatars.length;
+  return avatars[index];
 };
 
 const firstNames = ['Alex', 'Jordan', 'Casey', 'Riley', 'Morgan', 'Taylor', 'Avery', 'Parker', 'Quinn', 'Skyler', 'Hiro', 'Suki', 'Zane', 'Lyra', 'Kael', 'Nova', 'Orion', 'Vega', 'Ryla', 'Jinx'];
