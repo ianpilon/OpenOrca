@@ -24,44 +24,43 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   
-  --font-sans: 'Inter', sans-serif;
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Rajdhani', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
 
-  --radius: 0.5rem;
+  --radius: 0px; /* Sharp corners for military look */
 }
 
 :root {
-  /* Dark Cyber-Noir Theme */
-  --background: 240 10% 4%; /* Very dark almost black */
-  --foreground: 210 20% 98%; /* White-ish */
+  /* Tactical Recon Theme */
+  --background: 0 0% 5%; /* #0d0d0d */
+  --foreground: 0 0% 90%; /* #e6e6e6 */
 
-  --card: 240 10% 6%;
-  --card-foreground: 210 20% 98%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 90%;
 
-  --popover: 240 10% 6%;
-  --popover-foreground: 210 20% 98%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 90%;
 
-  --primary: 265 80% 60%; /* Vivid Purple */
-  --primary-foreground: 210 20% 98%;
+  --primary: 24 100% 50%; /* Tactical Orange #ff6600 */
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 180 80% 40%; /* Cyan/Teal */
-  --secondary-foreground: 210 20% 98%;
+  --secondary: 210 20% 20%; /* Muted slate */
+  --secondary-foreground: 0 0% 90%;
 
-  --muted: 240 10% 12%;
-  --muted-foreground: 240 5% 65%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 50%;
 
-  --accent: 265 80% 60%;
-  --accent-foreground: 210 20% 98%;
+  --accent: 24 100% 50%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62% 30%;
-  --destructive-foreground: 210 20% 98%;
+  --destructive-foreground: 0 0% 90%;
 
-  --border: 240 10% 15%;
-  --input: 240 10% 15%;
-  --ring: 265 80% 60%;
+  --border: 0 0% 20%;
+  --input: 0 0% 15%;
+  --ring: 24 100% 50%;
 
-  --radius: 0.5rem;
+  --radius: 0px;
 }
 
 @layer base {
@@ -70,20 +69,86 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-image: 
-      radial-gradient(circle at 50% 50%, hsl(265 80% 60% / 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 90% 10%, hsl(180 80% 40% / 0.03) 0%, transparent 40%);
+    /* Diagonal Grid Texture */
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 10px
+    );
   }
 }
 
-.glass-panel {
-  @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-xl;
+/* Tactical HUD Elements */
+.hud-panel {
+  @apply bg-background/90 border border-white/10 backdrop-blur-sm relative;
 }
 
-.neon-text {
-  text-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+.hud-corner-tl::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid hsl(var(--primary));
+  border-left: 2px solid hsl(var(--primary));
 }
 
-.neon-border {
-  box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
+.hud-corner-tr::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid hsl(var(--primary));
+  border-right: 2px solid hsl(var(--primary));
+}
+
+.hud-corner-bl::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid hsl(var(--primary));
+  border-left: 2px solid hsl(var(--primary));
+}
+
+.hud-corner-br::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid hsl(var(--primary));
+  border-right: 2px solid hsl(var(--primary));
+}
+
+.hud-text {
+  @apply font-mono uppercase tracking-widest text-xs;
+}
+
+.scan-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: hsl(var(--primary) / 0.1);
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  animation: scan 4s linear infinite;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@keyframes scan {
+  0% { top: -10%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 110%; opacity: 0; }
 }

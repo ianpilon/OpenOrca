@@ -34,65 +34,62 @@ export function NetworkCanvas({ data, onNodeClick, filter }: NetworkCanvasProps)
   }, []);
 
   const clusterCenters: Record<number, {x: number, y: number, label: string}> = {
-    0: { x: -300, y: 0, label: 'San Francisco' },
-    1: { x: 300, y: -200, label: 'New York' },
-    2: { x: 500, y: -50, label: 'Toronto' },
-    3: { x: -200, y: -300, label: 'Waterloo' },
-    4: { x: 200, y: 250, label: 'Austin' },
-    5: { x: -100, y: 400, label: 'Remote' },
+    0: { x: -300, y: 0, label: 'SECTOR: SF' },
+    1: { x: 300, y: -200, label: 'SECTOR: NY' },
+    2: { x: 500, y: -50, label: 'SECTOR: TO' },
+    3: { x: -200, y: -300, label: 'SECTOR: WA' },
+    4: { x: 200, y: 250, label: 'SECTOR: AU' },
+    5: { x: -100, y: 400, label: 'SECTOR: RMT' },
   };
 
   // Configure Forces for "Cluster" layout
   useEffect(() => {
     if (graphRef.current) {
-      // 1. Charge: Repulsion. Negative value pushes nodes apart.
-      // Stronger repulsion (-80) prevents the tight ball.
       graphRef.current.d3Force('charge').strength(-200).distanceMax(600);
-
-      // 2. Link: Connection stiffness/length.
-      // Longer distance allows clusters to separate.
       graphRef.current.d3Force('link').distance(70);
-
-      // 3. Collide: Prevent overlap
       graphRef.current.d3Force('collide', d3.forceCollide(12));
-
-      // 4. Center: Keep it visible in viewport, but don't crush it
       graphRef.current.d3Force('center').strength(0.01);
       
-      // 5. Custom Cluster Force: Pull nodes towards distinct focal points based on their group
-      // This forces the "geographic" separation
       const clusterForce = (alpha: number) => {
         data.nodes.forEach((node: any) => {
           const clusterId = node.clusterGroup || 0;
           const target = clusterCenters[clusterId] || { x: 0, y: 0 };
           
-          // Move towards target
           node.vx += (target.x - node.x) * 1 * alpha;
           node.vy += (target.y - node.y) * 1 * alpha;
         });
       };
       
-      // Register custom force
       graphRef.current.d3Force('cluster', clusterForce);
-
-      // Re-heat simulation
       graphRef.current.d3ReheatSimulation();
     }
   }, [graphRef.current, data]);
 
   const drawClusterLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
-    // Only draw labels if we're not zoomed in too far (to avoid clutter)
-    // or always draw them? Let's draw them always but fade them out if zoomed in extremely close?
-    // Actually, drawing them "behind" everything is nice.
-    
     ctx.save();
-    ctx.font = '700 40px "Space Grotesk"';
+    ctx.font = '400 12px "Share Tech Mono"'; // Technical mono font
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'; // Very subtle, giant background text
     
     Object.values(clusterCenters).forEach(center => {
-      ctx.fillText(center.label.toUpperCase(), center.x, center.y);
+      // Draw Grid Marker
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(center.x - 50, center.y);
+      ctx.lineTo(center.x + 50, center.y);
+      ctx.moveTo(center.x, center.y - 50);
+      ctx.lineTo(center.x, center.y + 50);
+      ctx.stroke();
+
+      // Draw Label Background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      const textWidth = ctx.measureText(center.label).width;
+      ctx.fillRect(center.x - textWidth/2 - 4, center.y - 8, textWidth + 8, 16);
+      
+      // Draw Label Text
+      ctx.fillStyle = '#ff6600'; // Primary tactical orange
+      ctx.fillText(center.label, center.x, center.y + 1);
     });
     
     ctx.restore();
@@ -102,57 +99,45 @@ export function NetworkCanvas({ data, onNodeClick, filter }: NetworkCanvasProps)
     const isExceptional = node.exceptional;
     const isFilteredOut = filter === 'exceptional' && !isExceptional;
     
-    // Dim nodes if filtered out
     const opacity = isFilteredOut ? 0.05 : 1;
     
-    // Base size
-    const size = isExceptional ? 6 : 4;
-    
-    // Glow for exceptional nodes
+    // Draw connections/crosshairs for exceptional
     if (isExceptional && !isFilteredOut) {
+      const size = 6;
       ctx.beginPath();
       ctx.arc(node.x, node.y, size + 4, 0, 2 * Math.PI, false);
-      ctx.fillStyle = 'rgba(124, 58, 237, 0.2)'; // Primary purple glow (outer)
-      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 102, 0, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
       
+      // Target brackets
+      ctx.strokeStyle = '#ff6600';
       ctx.beginPath();
-      ctx.arc(node.x, node.y, size + 2, 0, 2 * Math.PI, false);
-      ctx.fillStyle = 'rgba(124, 58, 237, 0.4)'; // Primary purple glow (inner)
-      ctx.fill();
+      ctx.moveTo(node.x - 8, node.y - 8);
+      ctx.lineTo(node.x - 4, node.y - 8);
+      ctx.moveTo(node.x - 8, node.y - 8);
+      ctx.lineTo(node.x - 8, node.y - 4);
+      ctx.stroke();
     }
 
-    // Draw circle background
+    // Node Body
+    const size = isExceptional ? 4 : 2;
     ctx.beginPath();
     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
-    // Use color to distinguish clusters slightly? No, stick to design system for now.
-    // Maybe use location mapping if requested later.
-    ctx.fillStyle = isExceptional ? '#7c3aed' : '#2dd4bf'; // Purple or Teal
+    ctx.fillStyle = isExceptional ? '#ff6600' : '#475569'; // Orange or Slate-600
     ctx.globalAlpha = opacity;
     ctx.fill();
 
-    // Draw Image (if scale is large enough to matter)
-    if (globalScale > 1.2 && !isFilteredOut) {
-      const img = images.current[node.img];
-      if (img) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
-        ctx.clip();
-        ctx.drawImage(img, node.x - size, node.y - size, size * 2, size * 2);
-        ctx.restore();
-      }
-    }
-    
     // Reset alpha
     ctx.globalAlpha = 1;
 
     // Draw label on hover or high scale
     if (globalScale > 2.5 && !isFilteredOut) {
-       ctx.font = `${isExceptional ? '600' : '400'} 4px Sans-Serif`;
-       ctx.textAlign = 'center';
-       ctx.textBaseline = 'top';
-       ctx.fillStyle = isExceptional ? '#fff' : 'rgba(255,255,255,0.7)';
-       ctx.fillText(node.name, node.x, node.y + size + 2);
+       ctx.font = '400 4px "Share Tech Mono"';
+       ctx.textAlign = 'left';
+       ctx.textBaseline = 'middle';
+       ctx.fillStyle = isExceptional ? '#ff6600' : 'rgba(255,255,255,0.5)';
+       ctx.fillText(`// ${node.name}`, node.x + 8, node.y);
     }
   }, [filter]);
 
@@ -164,9 +149,9 @@ export function NetworkCanvas({ data, onNodeClick, filter }: NetworkCanvasProps)
         height={dimensions.h}
         graphData={data}
         nodeLabel="name"
-        backgroundColor="#050505" // dark bg
-        nodeRelSize={6}
-        linkColor={() => '#3f3f46'} // zinc-700
+        backgroundColor="#00000000" // Transparent to show CSS grid background
+        nodeRelSize={4}
+        linkColor={() => '#334155'} // slate-700
         linkWidth={1}
         onNodeClick={(node: any) => {
             // Zoom to node
@@ -176,10 +161,10 @@ export function NetworkCanvas({ data, onNodeClick, filter }: NetworkCanvasProps)
         }}
         nodeCanvasObject={paintNode}
         onRenderFramePre={drawClusterLabels}
-        cooldownTicks={200} // Longer cooldown to let it settle
-        d3AlphaDecay={0.01} // Slower decay for better settling
-        d3VelocityDecay={0.4} // More friction to stop jitter
-        warmupTicks={100} // Compute layout before showing
+        cooldownTicks={200} 
+        d3AlphaDecay={0.01}
+        d3VelocityDecay={0.4}
+        warmupTicks={100}
       />
     </div>
   );

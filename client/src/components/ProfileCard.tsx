@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion';
 import { NodeData } from '@/lib/mockData';
-import { Github, Linkedin, Twitter, Globe, X, ExternalLink, Briefcase, MapPin, Clock, Award } from 'lucide-react';
+import { Github, Linkedin, Twitter, Globe, X, Scan, Database, MapPin, Clock, Fingerprint } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 interface ProfileCardProps {
@@ -19,72 +18,84 @@ export function ProfileCard({ node, onClose }: ProfileCardProps) {
       initial={{ x: 400, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 400, opacity: 0 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-      className="fixed right-4 top-4 bottom-4 w-[400px] z-50 pointer-events-auto"
+      transition={{ type: 'tween', ease: 'circOut', duration: 0.3 }}
+      className="fixed right-6 top-24 bottom-24 w-[380px] z-50 pointer-events-auto"
     >
-      <Card className="h-full bg-black/80 backdrop-blur-xl border-primary/20 text-white shadow-2xl overflow-y-auto scrollbar-hide">
-        <CardHeader className="relative p-0 h-32 bg-gradient-to-br from-primary/20 to-secondary/20">
+      <div className="h-full bg-black/95 backdrop-blur-xl border border-white/20 text-white shadow-2xl overflow-y-auto scrollbar-hide flex flex-col relative">
+        {/* Tactical Corner Markers */}
+        <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-primary z-10" />
+        <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-primary z-10" />
+        <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-primary z-10" />
+        <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-primary z-10" />
+
+        {/* Header */}
+        <div className="p-4 border-b border-white/10 bg-white/5 relative">
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="absolute top-2 right-2 hover:bg-white/10 text-white/70 hover:text-white"
+            className="absolute top-2 right-2 hover:bg-white/10 text-white/50 hover:text-primary rounded-none"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
-          <div className="absolute -bottom-12 left-6">
-            <div className={`rounded-full p-1 ${node.exceptional ? 'bg-gradient-to-r from-primary to-secondary' : 'bg-border'}`}>
-              <img
-                src={node.img}
-                alt={node.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-black"
-              />
-            </div>
+          
+          <div className="flex gap-4 items-center">
+             <div className="relative">
+                <img
+                  src={node.img}
+                  alt={node.name}
+                  className="w-16 h-16 grayscale contrast-125 border border-white/20"
+                />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border border-black" />
+             </div>
+             <div>
+                <div className="text-[10px] font-mono text-primary mb-1 tracking-widest">TARGET_ID: {node.id.toUpperCase()}</div>
+                <h2 className="text-xl font-bold font-sans uppercase tracking-wide">{node.name}</h2>
+                <div className="text-xs font-mono text-muted-foreground">{node.role}</div>
+             </div>
           </div>
-        </CardHeader>
+        </div>
         
-        <CardContent className="pt-16 px-6 pb-6 space-y-6">
-          {/* Header Info */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold font-display">{node.name}</h2>
-              {node.exceptional && (
-                <Badge variant="outline" className="border-primary text-primary bg-primary/10 animate-pulse">
-                  Exceptional
-                </Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground flex items-center gap-1.5">
-              <Briefcase className="w-3 h-3" />
-              {node.role} at <span className="text-foreground font-medium">{node.company}</span>
-            </p>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-               <MapPin className="w-3 h-3" /> {node.location} 
-               <span className="mx-1">•</span>
-               <Clock className="w-3 h-3" /> {node.yearsExperience}y exp
-            </p>
+        <div className="p-6 space-y-6 flex-1">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-4">
+             <div className="bg-white/5 p-2 border border-white/10">
+                <div className="text-[10px] text-muted-foreground uppercase font-mono mb-1">Clearance</div>
+                <div className="text-sm font-bold text-white flex items-center gap-2">
+                   <Shield /> {node.exceptional ? 'LEVEL 5' : 'LEVEL 1'}
+                </div>
+             </div>
+             <div className="bg-white/5 p-2 border border-white/10">
+                <div className="text-[10px] text-muted-foreground uppercase font-mono mb-1">Sector</div>
+                <div className="text-sm font-bold text-white flex items-center gap-2">
+                   <MapPin className="w-3 h-3" /> {node.location.split(' ')[0].toUpperCase()}
+                </div>
+             </div>
           </div>
 
           <Separator className="bg-white/10" />
 
-          {/* Psychographic Profile */}
+          {/* Performance Index (Psychographics) */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Psychographic Profile</h3>
+            <h3 className="text-xs font-bold font-mono text-primary uppercase tracking-widest flex items-center gap-2">
+               <Database className="w-3 h-3" /> Performance Index
+            </h3>
             
-            <div className="grid grid-cols-2 gap-4">
-               <TraitBar label="Innovation" value={node.psychographic.innovationScore} color="bg-primary" />
-               <TraitBar label="Leadership" value={node.psychographic.leadershipPotential} color="bg-secondary" />
-               <TraitBar label="Openness" value={node.psychographic.openness} color="bg-blue-500" />
-               <TraitBar label="Conscientiousness" value={node.psychographic.conscientiousness} color="bg-green-500" />
+            <div className="space-y-3">
+               <TechBar label="Innovation Cap" value={node.psychographic.innovationScore} />
+               <TechBar label="Command Leadership" value={node.psychographic.leadershipPotential} />
+               <TechBar label="Cognitive Flex" value={node.psychographic.openness} />
             </div>
           </div>
 
-           {/* Skills */}
+           {/* Skills Matrix */}
            <div className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Top Skills</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-xs font-bold font-mono text-primary uppercase tracking-widest flex items-center gap-2">
+               <Fingerprint className="w-3 h-3" /> Competency Matrix
+            </h3>
+            <div className="flex flex-wrap gap-1">
               {node.skills.map((skill, i) => (
-                <Badge key={i} variant="secondary" className="bg-white/5 hover:bg-white/10 text-white/80 border-0">
+                <Badge key={i} variant="outline" className="rounded-none border-white/20 text-[10px] font-mono uppercase bg-transparent text-white/80 hover:bg-primary/20 hover:border-primary hover:text-primary transition-colors">
                   {skill}
                 </Badge>
               ))}
@@ -93,32 +104,51 @@ export function ProfileCard({ node, onClose }: ProfileCardProps) {
 
           <Separator className="bg-white/10" />
 
-          {/* Connect */}
+          {/* Comms Channels */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Connect</h3>
+            <h3 className="text-xs font-bold font-mono text-primary uppercase tracking-widest flex items-center gap-2">
+               <Scan className="w-3 h-3" /> Secure Comms
+            </h3>
             <div className="grid grid-cols-2 gap-2">
-               <SocialBtn icon={Github} label="Github" href={`https://${node.social.github}`} />
-               <SocialBtn icon={Linkedin} label="LinkedIn" href={`https://${node.social.linkedin}`} />
-               <SocialBtn icon={Twitter} label="Twitter" href={`https://${node.social.twitter}`} />
-               <SocialBtn icon={Globe} label="Website" href={`https://${node.social.website}`} />
+               <SocialBtn icon={Github} label="Repo" href={`https://${node.social.github}`} />
+               <SocialBtn icon={Linkedin} label="Net" href={`https://${node.social.linkedin}`} />
+               <SocialBtn icon={Twitter} label="Feed" href={`https://${node.social.twitter}`} />
+               <SocialBtn icon={Globe} label="Link" href={`https://${node.social.website}`} />
             </div>
           </div>
 
-        </CardContent>
-      </Card>
+        </div>
+        
+        {/* Footer */}
+        <div className="p-2 border-t border-white/10 bg-black text-[10px] font-mono text-center text-muted-foreground">
+           // ENCRYPTED CONNECTION ESTABLISHED //
+        </div>
+      </div>
     </motion.div>
   );
 }
 
-function TraitBar({ label, value, color }: { label: string, value: number, color: string }) {
+function Shield() {
+   return (
+      <svg className="w-3 h-3 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+   )
+}
+
+function TechBar({ label, value }: { label: string, value: number }) {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs">
-        <span className="text-white/70">{label}</span>
-        <span className="font-mono text-white/90">{value}%</span>
+      <div className="flex justify-between text-[10px] font-mono uppercase">
+        <span className="text-white/60">{label}</span>
+        <span className="text-primary">{value}%</span>
       </div>
-      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full`} style={{ width: `${value}%` }} />
+      <div className="h-1 w-full bg-white/10 flex gap-0.5">
+         {/* Segmented Bar */}
+        {Array.from({ length: 20 }).map((_, i) => (
+           <div 
+             key={i} 
+             className={`h-full flex-1 ${i < (value / 5) ? 'bg-primary' : 'bg-transparent'}`} 
+           />
+        ))}
       </div>
     </div>
   );
@@ -126,9 +156,9 @@ function TraitBar({ label, value, color }: { label: string, value: number, color
 
 function SocialBtn({ icon: Icon, label, href }: { icon: any, label: string, href: string }) {
   return (
-    <Button variant="outline" className="w-full justify-start gap-2 border-white/10 hover:bg-white/5 hover:text-white" asChild>
+    <Button variant="outline" className="w-full justify-start gap-2 border-white/10 hover:bg-primary/10 hover:border-primary hover:text-primary rounded-none h-8 text-xs font-mono uppercase" asChild>
       <a href={href} target="_blank" rel="noopener noreferrer">
-        <Icon className="w-4 h-4" />
+        <Icon className="w-3 h-3" />
         {label}
       </a>
     </Button>
