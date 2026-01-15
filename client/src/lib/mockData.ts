@@ -248,8 +248,8 @@ export function generateGraphData() {
 
   // Generate Links (Prefer intra-cluster connections)
   nodes.forEach((node, i) => {
-    // Fewer links per node to reduce clutter with large dataset
-    const numLinks = node.exceptional ? randomInt(2, 4) : randomInt(1, 2);
+    // Reduced links by 50% for cleaner visualization
+    const numLinks = node.exceptional ? randomInt(1, 2) : 1;
     const orgNodes = nodesByOrg[node.location] || [];
 
     for (let j = 0; j < numLinks; j++) {
