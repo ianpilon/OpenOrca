@@ -54,12 +54,12 @@ export default function Home() {
           <div className="hud-panel p-3 flex gap-6 items-center">
              <div className="text-center px-2">
                 <span className="block text-xl font-mono text-foreground">{totalNodes}</span>
-                <span className="hud-text">Units</span>
+                <span className="hud-text">People</span>
              </div>
              <div className="w-px h-8 bg-white/5" />
              <div className="text-center px-2">
                 <span className="block text-xl font-mono text-secondary">{exceptionalCount}</span>
-                <span className="hud-text text-secondary/70">HVT</span>
+                <span className="hud-text text-secondary/70">Exceptional Talent</span>
              </div>
              <div className="w-px h-8 bg-white/5" />
              <div className="text-center px-2">
