@@ -69,7 +69,7 @@ export function TwitterDropdown({ isOpen, onClose }: TwitterDropdownProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-14 right-0 w-[420px] h-[600px] bg-black border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col">
+    <div className="absolute top-14 right-0 w-[420px] h-[85vh] max-h-[800px] bg-black border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col">
       <div className="relative">
         <button 
           onClick={onClose}
