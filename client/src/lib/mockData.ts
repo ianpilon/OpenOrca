@@ -117,12 +117,77 @@ export interface NodeData {
   };
 }
 
+// Featured profiles - real people with synthetic data (to be updated later)
+const featuredProfiles = [
+  { name: 'Ian Pilon', location: 'Toronto', role: 'AI Researcher' },
+  { name: 'Elon Musk', location: 'San Francisco', role: 'Product Manager' },
+  { name: 'Amitav Krishna', location: 'San Francisco', role: 'Data Scientist' },
+  { name: 'William Suriaputra', location: 'New York', role: 'Full Stack Developer' },
+  { name: 'Prabal Gupta', location: 'San Francisco', role: 'Blockchain Architect' },
+  { name: 'Eden Chan', location: 'Toronto', role: 'UX Designer' },
+  { name: 'Umesh Khanna', location: 'Waterloo', role: 'Cloud Engineer' },
+];
+
+function createFeaturedNode(profile: { name: string; location: string; role: string }, index: number): NodeData {
+  const locationIdx = locations.findIndex(l => l.name === profile.location);
+  const nameParts = profile.name.split(' ');
+  const fn = nameParts[0];
+  const ln = nameParts.slice(1).join('');
+  
+  // All featured profiles are exceptional with full milestones
+  const shuffledMilestones = [...milestoneTemplates].sort(() => Math.random() - 0.5);
+  const selectedMilestones = shuffledMilestones.slice(0, 6).sort((a, b) => a.year - b.year);
+  
+  const shuffledTraits = [...exceptionalTraits].sort(() => Math.random() - 0.5);
+  const selectedTraits = shuffledTraits.slice(0, 4);
+
+  return {
+    id: `vip${index}`,
+    name: profile.name,
+    role: profile.role,
+    company: randomItem(companies),
+    img: randomItem(avatars),
+    exceptional: true,
+    skills: Array.from({ length: 5 }, () => randomItem(skillsList)),
+    psychographic: {
+      openness: randomInt(85, 100),
+      conscientiousness: randomInt(80, 100),
+      extraversion: randomInt(60, 95),
+      agreeableness: randomInt(70, 95),
+      neuroticism: randomInt(10, 30),
+      innovationScore: randomInt(92, 100),
+      leadershipPotential: randomInt(85, 100),
+    },
+    social: {
+      github: `github.com/${fn.toLowerCase()}${ln.toLowerCase()}`,
+      linkedin: `linkedin.com/in/${fn.toLowerCase()}-${ln.toLowerCase()}`,
+      twitter: `@${fn.toLowerCase()}_tech`,
+      website: `${fn.toLowerCase()}.dev`,
+    },
+    yearsExperience: randomInt(8, 20),
+    location: profile.location,
+    clusterGroup: locationIdx >= 0 ? locationIdx : 0,
+    journey: {
+      milestones: selectedMilestones as JourneyMilestone[],
+      narrative: randomItem(journeyNarratives),
+      exceptionalTraits: selectedTraits,
+    },
+  };
+}
+
 export function generateGraphData(count: number = 1000) {
   const nodes: NodeData[] = [];
   const links: { source: string; target: string }[] = [];
 
-  // 1. Generate Nodes assigned to locations
-  for (let i = 0; i < count; i++) {
+  // Add featured profiles first
+  featuredProfiles.forEach((profile, idx) => {
+    nodes.push(createFeaturedNode(profile, idx));
+  });
+
+  // Generate remaining random nodes
+  const remainingCount = count - featuredProfiles.length;
+  for (let i = 0; i < remainingCount; i++) {
+    const nodeIndex = i + featuredProfiles.length; // Offset index for unique IDs
     const isExceptional = Math.random() > 0.85; // Top 15%
     const fn = randomItem(firstNames);
     const ln = randomItem(lastNames);
@@ -141,7 +206,7 @@ export function generateGraphData(count: number = 1000) {
     const selectedTraits = shuffledTraits.slice(0, numTraits);
 
     nodes.push({
-      id: `u${i}`,
+      id: `u${nodeIndex}`,
       name: `${fn} ${ln}`,
       role: randomItem(roles),
       company: randomItem(companies),
@@ -187,19 +252,14 @@ export function generateGraphData(count: number = 1000) {
 
       if (stayInCluster) {
         // Find a random node in the same location
-        // This acts as a filter, so might be slow if we just loop. 
-        // Optimization: pick random indices until we find one in same location.
-        // Or better: Pre-group indices by location.
-        
-        // Simple approach for 1000 nodes: Just try 10 times to find a match, otherwise random
         let attempts = 0;
         do {
-           targetIndex = randomInt(0, count - 1);
+           targetIndex = randomInt(0, nodes.length - 1);
            attempts++;
         } while (nodes[targetIndex].location !== node.location && attempts < 20);
       } else {
         // Connect to anywhere (bridge between clusters)
-        targetIndex = randomInt(0, count - 1);
+        targetIndex = randomInt(0, nodes.length - 1);
       }
 
       if (targetIndex !== i) {
