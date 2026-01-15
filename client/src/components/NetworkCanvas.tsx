@@ -35,12 +35,13 @@ export function NetworkCanvas({ data, onNodeClick, filter, onZoomChange }: Netwo
   }, []);
 
   const clusterCenters: Record<number, {x: number, y: number, label: string}> = {
-    0: { x: -300, y: 0, label: 'SECTOR: SF' },
-    1: { x: 300, y: -200, label: 'SECTOR: NY' },
-    2: { x: 500, y: -50, label: 'SECTOR: TO' },
-    3: { x: -200, y: -300, label: 'SECTOR: WA' },
-    4: { x: 200, y: 250, label: 'SECTOR: AU' },
-    5: { x: -100, y: 400, label: 'SECTOR: RMT' },
+    0: { x: -300, y: 0, label: 'xAI' },
+    1: { x: 300, y: -200, label: 'OpenAI' },
+    2: { x: 450, y: 100, label: 'Anthropic' },
+    3: { x: -200, y: -300, label: 'Meta' },
+    4: { x: 200, y: 250, label: 'Google (DeepMind)' },
+    5: { x: -150, y: 350, label: 'Google Gemini' },
+    6: { x: 400, y: -350, label: 'Nvidia' },
   };
 
   // Configure Forces for "Cluster" layout
@@ -68,13 +69,12 @@ export function NetworkCanvas({ data, onNodeClick, filter, onZoomChange }: Netwo
 
   const drawClusterLabels = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
     ctx.save();
-    ctx.font = '500 10px "Share Tech Mono"'; // Technical mono font, smaller
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
     Object.values(clusterCenters).forEach(center => {
       // Draw Grid Marker - Subtle Circle
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.lineWidth = 1;
       
       ctx.beginPath();
@@ -89,9 +89,20 @@ export function NetworkCanvas({ data, onNodeClick, filter, onZoomChange }: Netwo
       ctx.lineTo(center.x, center.y + 10);
       ctx.stroke();
 
-      // Label
-      ctx.fillStyle = '#64748b'; // Slate-500
-      ctx.fillText(center.label, center.x, center.y + 95);
+      // Label background for visibility
+      ctx.font = 'bold 12px "Share Tech Mono"';
+      const textWidth = ctx.measureText(center.label).width;
+      ctx.fillStyle = 'rgba(22, 24, 29, 0.85)';
+      ctx.fillRect(center.x - textWidth/2 - 6, center.y + 85, textWidth + 12, 18);
+      
+      // Label border
+      ctx.strokeStyle = 'rgba(130, 207, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(center.x - textWidth/2 - 6, center.y + 85, textWidth + 12, 18);
+
+      // Label text
+      ctx.fillStyle = '#82cfff';
+      ctx.fillText(center.label, center.x, center.y + 94);
     });
     
     ctx.restore();
@@ -176,7 +187,7 @@ export function NetworkCanvas({ data, onNodeClick, filter, onZoomChange }: Netwo
             onNodeClick(node);
         }}
         nodeCanvasObject={paintNode}
-        onRenderFramePre={drawClusterLabels}
+        onRenderFramePost={drawClusterLabels}
         cooldownTicks={100} 
         d3AlphaDecay={0.02} // Slightly faster decay to freeze sooner
         d3VelocityDecay={0.6} // High friction to stop movement

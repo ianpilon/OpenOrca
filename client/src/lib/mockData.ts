@@ -47,14 +47,15 @@ const journeyNarratives = [
   "Balanced extraordinary professional output with a demanding personal life, demonstrating time management and execution abilities that set them apart from typical high performers.",
 ];
 
-// Define locations with relative weights/masses
+// Define organizations with relative weights/masses (xAI is largest)
 const locations = [
-  { name: 'San Francisco', weight: 0.3 }, 
-  { name: 'New York', weight: 0.2 },     
-  { name: 'Toronto', weight: 0.15 },        
-  { name: 'Waterloo', weight: 0.1 },     
-  { name: 'Austin', weight: 0.1 },       
-  { name: 'Remote', weight: 0.15 },       
+  { name: 'xAI', weight: 0.25 }, 
+  { name: 'OpenAI', weight: 0.18 },     
+  { name: 'Anthropic', weight: 0.15 },        
+  { name: 'Meta', weight: 0.12 },     
+  { name: 'Google (DeepMind)', weight: 0.12 },       
+  { name: 'Google Gemini', weight: 0.10 },
+  { name: 'Nvidia', weight: 0.08 },       
 ];
 
 function randomItem<T>(arr: T[]): T {
@@ -119,13 +120,13 @@ export interface NodeData {
 
 // Featured profiles - real people with synthetic data (to be updated later)
 const featuredProfiles = [
-  { name: 'Ian Pilon', location: 'Toronto', role: 'AI Researcher' },
-  { name: 'Elon Musk', location: 'San Francisco', role: 'Product Manager' },
-  { name: 'Amitav Krishna', location: 'San Francisco', role: 'Data Scientist' },
-  { name: 'William Suriaputra', location: 'New York', role: 'Full Stack Developer' },
-  { name: 'Prabal Gupta', location: 'San Francisco', role: 'Blockchain Architect' },
-  { name: 'Eden Chan', location: 'Toronto', role: 'UX Designer' },
-  { name: 'Umesh Khanna', location: 'Waterloo', role: 'Cloud Engineer' },
+  { name: 'Ian Pilon', location: 'xAI', role: 'AI Researcher' },
+  { name: 'Elon Musk', location: 'xAI', role: 'CEO' },
+  { name: 'Amitav Krishna', location: 'xAI', role: 'Data Scientist' },
+  { name: 'William Suriaputra', location: 'OpenAI', role: 'Full Stack Developer' },
+  { name: 'Prabal Gupta', location: 'Anthropic', role: 'Blockchain Architect' },
+  { name: 'Eden Chan', location: 'Meta', role: 'UX Designer' },
+  { name: 'Umesh Khanna', location: 'Google (DeepMind)', role: 'Cloud Engineer' },
 ];
 
 function createFeaturedNode(profile: { name: string; location: string; role: string }, index: number): NodeData {
