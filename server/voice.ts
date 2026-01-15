@@ -86,6 +86,13 @@ export function setupVoiceWebSocket(httpServer: Server) {
     xaiWs.on("message", (data) => {
       try {
         const message = JSON.parse(data.toString());
+        log(`xAI event: ${message.type}`, "voice");
+        
+        if (message.type === "input_audio_buffer.speech_stopped") {
+          log("Speech stopped, committing buffer", "voice");
+          xaiWs!.send(JSON.stringify({ type: "input_audio_buffer.commit" }));
+        }
+        
         if (clientWs.readyState === WebSocket.OPEN) {
           clientWs.send(JSON.stringify(message));
         }
