@@ -108,14 +108,14 @@ export default function Home() {
               onClick={() => setFilter('all')}
               className={`flex-1 rounded-none font-mono text-[10px] uppercase h-8 ${filter === 'all' ? 'bg-white/10 text-white' : 'text-muted-foreground hover:text-white hover:bg-white/5'}`}
             >
-              All Signals
+              All People
             </Button>
             <Button 
               variant="ghost"
               onClick={() => setFilter('exceptional')}
               className={`flex-1 rounded-none font-mono text-[10px] uppercase h-8 ${filter === 'exceptional' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'text-muted-foreground hover:text-white hover:bg-white/5'}`}
             >
-              HVT Only
+              Exceptional Only
             </Button>
           </div>
         </div>
