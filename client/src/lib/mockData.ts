@@ -15,6 +15,27 @@ const avatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7, 
 // Custom avatars for specific people
 const customAvatars: Record<string, string> = {
   'Ian Pilon': 'https://pbs.twimg.com/profile_images/2006940793265606656/93QT6QTT_400x400.jpg',
+  'Umesh Khanna': 'https://pbs.twimg.com/profile_images/1934350294642733056/qXErHn6w_400x400.jpg',
+};
+
+// Custom profile overrides for featured people (real data)
+const customProfiles: Record<string, Partial<{
+  role: string;
+  location: string;
+  social: { github: string; linkedin: string; twitter: string; website: string };
+  narrative: string;
+}>> = {
+  'Umesh Khanna': {
+    role: 'Talent Engineering',
+    location: 'xAI',
+    social: {
+      github: 'github.com/umeshkhanna',
+      linkedin: 'linkedin.com/in/umesh-khanna',
+      twitter: '@forwarddeploy',
+      website: 'forwarddeploy.com',
+    },
+    narrative: "@xai talent engineering | Forward deployed angels | University of Waterloo alumnus. Based in San Francisco, CA. Known for identifying and recruiting exceptional talent in the AI space.",
+  },
 };
 
 const getAvatarUrl = (name: string) => {
@@ -145,11 +166,13 @@ const featuredProfiles = [
   { name: 'William Suriaputra', location: 'OpenAI', role: 'Full Stack Developer' },
   { name: 'Prabal Gupta', location: 'Anthropic', role: 'Blockchain Architect' },
   { name: 'Eden Chan', location: 'Meta', role: 'UX Designer' },
-  { name: 'Umesh Khanna', location: 'Google (DeepMind)', role: 'Cloud Engineer' },
+  { name: 'Umesh Khanna', location: 'xAI', role: 'Talent Engineering' },
 ];
 
 function createFeaturedNode(profile: { name: string; location: string; role: string }, index: number): NodeData {
-  const locationIdx = locations.findIndex(l => l.name === profile.location);
+  const customProfile = customProfiles[profile.name];
+  const effectiveLocation = customProfile?.location || profile.location;
+  const locationIdx = locations.findIndex(l => l.name === effectiveLocation);
   const nameParts = profile.name.split(' ');
   const fn = nameParts[0];
   const ln = nameParts.slice(1).join('');
@@ -161,11 +184,18 @@ function createFeaturedNode(profile: { name: string; location: string; role: str
   const shuffledTraits = [...exceptionalTraits].sort(() => Math.random() - 0.5);
   const selectedTraits = shuffledTraits.slice(0, 4);
 
+  const defaultSocial = {
+    github: `github.com/${fn.toLowerCase()}${ln.toLowerCase()}`,
+    linkedin: `linkedin.com/in/${fn.toLowerCase()}-${ln.toLowerCase()}`,
+    twitter: `@${fn.toLowerCase()}_tech`,
+    website: `${fn.toLowerCase()}.dev`,
+  };
+
   return {
     id: `vip${index}`,
     name: profile.name,
-    role: profile.role,
-    company: randomItem(companies),
+    role: customProfile?.role || profile.role,
+    company: effectiveLocation,
     img: getAvatarUrl(profile.name),
     exceptional: true,
     skills: Array.from({ length: 5 }, () => randomItem(skillsList)),
@@ -178,18 +208,13 @@ function createFeaturedNode(profile: { name: string; location: string; role: str
       innovationScore: randomInt(92, 100),
       leadershipPotential: randomInt(85, 100),
     },
-    social: {
-      github: `github.com/${fn.toLowerCase()}${ln.toLowerCase()}`,
-      linkedin: `linkedin.com/in/${fn.toLowerCase()}-${ln.toLowerCase()}`,
-      twitter: `@${fn.toLowerCase()}_tech`,
-      website: `${fn.toLowerCase()}.dev`,
-    },
+    social: customProfile?.social || defaultSocial,
     yearsExperience: randomInt(8, 20),
-    location: profile.location,
+    location: effectiveLocation,
     clusterGroup: locationIdx >= 0 ? locationIdx : 0,
     journey: {
       milestones: selectedMilestones as JourneyMilestone[],
-      narrative: randomItem(journeyNarratives),
+      narrative: customProfile?.narrative || randomItem(journeyNarratives),
       exceptionalTraits: selectedTraits,
     },
   };
