@@ -11,6 +11,12 @@ const currentUser = {
   name: 'Umesh Khanna',
   handle: '@forwarddeploy',
   avatar: 'https://pbs.twimg.com/profile_images/1934350294642733056/qXErHn6w_400x400.jpg',
+  banner: 'https://pbs.twimg.com/profile_banners/3291691/1721196082/1500x500',
+  bio: '@xai talent engineering | 👸 forward deployed angels | 🌲 @uwaterloo',
+  location: 'San Francisco, CA',
+  joinDate: 'Joined August 2015',
+  following: '2,952',
+  followers: '7,407',
 };
 
 const mockTweets = [
@@ -64,26 +70,76 @@ export function TwitterDropdown({ isOpen, onClose }: TwitterDropdownProps) {
 
   return (
     <div className="absolute top-14 right-0 w-[420px] h-[600px] bg-black border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <img 
-            src={currentUser.avatar} 
-            alt={currentUser.name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-          <div className="flex flex-col">
-            <span className="font-bold text-white text-sm leading-tight">{currentUser.name}</span>
-            <span className="text-gray-500 text-xs">{currentUser.handle}</span>
+      <div className="relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 z-10 p-1.5 bg-black/60 hover:bg-black/80 rounded-full transition-colors"
+        >
+          <X className="w-4 h-4 text-white" />
+        </button>
+        
+        <div 
+          className="h-24 bg-cover bg-center"
+          style={{ backgroundImage: `url(${currentUser.banner})` }}
+        />
+        
+        <div className="px-4 pb-3">
+          <div className="flex justify-between items-start">
+            <img 
+              src={currentUser.avatar} 
+              alt={currentUser.name}
+              className="w-16 h-16 rounded-full object-cover border-4 border-black -mt-8"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              <button className="p-1.5 border border-gray-600 rounded-full hover:bg-gray-800">
+                <MoreHorizontal className="w-4 h-4 text-white" />
+              </button>
+              <button className="p-1.5 border border-gray-600 rounded-full hover:bg-gray-800">
+                <Mail className="w-4 h-4 text-white" />
+              </button>
+              <button className="px-4 py-1.5 bg-white text-black font-bold text-sm rounded-full hover:bg-gray-200">
+                Following
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <img src="/x-logo.png" alt="X" className="w-5 h-5" />
-          <button 
-            onClick={onClose}
-            className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-400" />
-          </button>
+          
+          <div className="mt-2">
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-white">{currentUser.name}</span>
+              <span className="text-base">🇨🇦🇺🇸</span>
+              <svg viewBox="0 0 22 22" className="w-4 h-4 text-blue-400 fill-current">
+                <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
+              </svg>
+              <div className="w-4 h-4 bg-white rounded flex items-center justify-center">
+                <span className="text-black text-xs font-bold">𝕏</span>
+              </div>
+            </div>
+            <span className="text-gray-500 text-sm">{currentUser.handle}</span>
+            <span className="ml-2 text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">Follows you</span>
+          </div>
+          
+          <p className="text-white text-sm mt-2">{currentUser.bio}</p>
+          
+          <div className="flex items-center gap-3 mt-2 text-gray-500 text-sm">
+            <span className="flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {currentUser.location}
+            </span>
+            <span className="flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {currentUser.joinDate}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-4 mt-2 text-sm">
+            <span><strong className="text-white">{currentUser.following}</strong> <span className="text-gray-500">Following</span></span>
+            <span><strong className="text-white">{currentUser.followers}</strong> <span className="text-gray-500">Followers</span></span>
+          </div>
         </div>
       </div>
 
