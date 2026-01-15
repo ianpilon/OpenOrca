@@ -12,6 +12,41 @@ const companies = ['Google', 'OpenAI', 'Anthropic', 'Meta', 'Netflix', 'Stripe',
 
 const skillsList = ['React', 'Python', 'TensorFlow', 'Rust', 'Go', 'Kubernetes', 'Design Systems', 'NLP', 'Computer Vision', 'Smart Contracts', 'GraphQL', 'AWS'];
 
+// Journey milestone templates for exceptional candidates
+const milestoneTemplates = [
+  { year: 2015, event: 'Founded first tech startup at age 19', category: 'founder' },
+  { year: 2016, event: 'Organized the first blockchain hackathon in the region', category: 'leadership' },
+  { year: 2017, event: 'Published groundbreaking research on distributed systems', category: 'research' },
+  { year: 2018, event: 'Built a peer-to-peer network reaching 100K nodes', category: 'engineering' },
+  { year: 2019, event: 'Led a team that shipped product to 1M users', category: 'leadership' },
+  { year: 2020, event: 'Developed proprietary behavioral science software from scratch', category: 'innovation' },
+  { year: 2021, event: 'Acquired by major tech company', category: 'founder' },
+  { year: 2022, event: 'Keynote speaker at global AI conference', category: 'thought_leader' },
+  { year: 2023, event: 'Launched AI platform with 80% efficiency gains over competitors', category: 'innovation' },
+  { year: 2024, event: 'Published bestselling book on technology leadership', category: 'thought_leader' },
+];
+
+const exceptionalTraits = [
+  'First-mover in emerging technology domains',
+  'Pattern of identifying opportunities before mainstream adoption',
+  'Track record of shipping products at scale',
+  'Demonstrated ability to build and lead high-performing teams',
+  'Cross-disciplinary expertise spanning technical and business domains',
+  'Published author or recognized thought leader',
+  'Built systems serving millions of users',
+  'Pioneer in applying research methodologies to practical problems',
+  'Consistent history of exceeding performance benchmarks',
+  'Rare combination of deep technical skill and strategic vision',
+];
+
+const journeyNarratives = [
+  "Distinguished themselves early by building production systems while peers were still learning fundamentals. Demonstrated a rare ability to see around corners, consistently positioning themselves at the forefront of emerging technology waves before they hit mainstream.",
+  "Took an unconventional path—applying ethnographic research to engineering problems, leading to breakthrough products that competitors couldn't replicate. Their interdisciplinary approach became their signature advantage.",
+  "Rose from contributor to leader by shipping what others said was impossible. Built systems that scaled 100x beyond original specs, earning trust that led to founding their own ventures.",
+  "Became known as the person who makes things happen. Organized industry-first events, published influential work, and built networks that others only talk about. Their impact extends far beyond their direct work.",
+  "Balanced extraordinary professional output with a demanding personal life, demonstrating time management and execution abilities that set them apart from typical high performers.",
+];
+
 // Define locations with relative weights/masses
 const locations = [
   { name: 'San Francisco', weight: 0.3 }, 
@@ -42,6 +77,12 @@ function getRandomLocation() {
   return locations[0].name; // Fallback
 }
 
+export interface JourneyMilestone {
+  year: number;
+  event: string;
+  category: 'founder' | 'leadership' | 'research' | 'engineering' | 'innovation' | 'thought_leader';
+}
+
 export interface NodeData {
   id: string;
   name: string;
@@ -67,7 +108,13 @@ export interface NodeData {
   };
   yearsExperience: number;
   location: string;
-  clusterGroup: number; // For visualization coloring if needed
+  clusterGroup: number;
+  // New fields for journey/synthesis
+  journey: {
+    milestones: JourneyMilestone[];
+    narrative: string;
+    exceptionalTraits: string[];
+  };
 }
 
 export function generateGraphData(count: number = 1000) {
@@ -83,6 +130,15 @@ export function generateGraphData(count: number = 1000) {
     
     // Assign a cluster group ID based on location index
     const locationIdx = locations.findIndex(l => l.name === location);
+
+    // Generate journey data
+    const numMilestones = isExceptional ? randomInt(4, 7) : randomInt(1, 3);
+    const shuffledMilestones = [...milestoneTemplates].sort(() => Math.random() - 0.5);
+    const selectedMilestones = shuffledMilestones.slice(0, numMilestones).sort((a, b) => a.year - b.year);
+    
+    const numTraits = isExceptional ? randomInt(3, 5) : randomInt(1, 2);
+    const shuffledTraits = [...exceptionalTraits].sort(() => Math.random() - 0.5);
+    const selectedTraits = shuffledTraits.slice(0, numTraits);
 
     nodes.push({
       id: `u${i}`,
@@ -110,6 +166,11 @@ export function generateGraphData(count: number = 1000) {
       yearsExperience: randomInt(1, 15),
       location: location,
       clusterGroup: locationIdx,
+      journey: {
+        milestones: selectedMilestones as JourneyMilestone[],
+        narrative: isExceptional ? randomItem(journeyNarratives) : "Shows steady progression with consistent performance across core competencies.",
+        exceptionalTraits: selectedTraits,
+      },
     });
   }
 
