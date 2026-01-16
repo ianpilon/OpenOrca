@@ -134,8 +134,9 @@ export function VoiceAI({ peopleData, onPersonFound }: VoiceAIProps) {
         });
       }
 
-      if ((data.type === 'response.audio.delta' || data.type === 'audio.delta') && (data.delta || data.audio)) {
-        playAudioChunk(data.delta || data.audio);
+      if (data.type === 'response.output_audio.delta' && data.delta) {
+        console.log('Playing audio chunk, size:', data.delta.length);
+        playAudioChunk(data.delta);
       }
 
       if (data.type === 'input_audio_buffer.speech_started' || data.type === 'speech.started') {
