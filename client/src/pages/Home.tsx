@@ -82,7 +82,7 @@ export default function Home() {
              <div className="h-px bg-white/5 w-full mb-3" />
              <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground flex items-center gap-3">
                <img src="/xai-logo.png" alt="xAI" className="h-6 w-auto" />
-               Talent Grid <span className="text-white/20">V.01</span>
+               Talent Graph <span className="text-white/20">V.01</span>
              </h1>
              <p className="hud-text mt-1">
                 Sector: <span className="text-secondary">Global</span> // Status: <span className="text-primary">Online</span>
