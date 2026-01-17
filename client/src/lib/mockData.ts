@@ -52,7 +52,7 @@ const firstNames = ['Alex', 'Jordan', 'Casey', 'Riley', 'Morgan', 'Taylor', 'Ave
 const lastNames = ['Chen', 'Smith', 'Kim', 'Patel', 'Rivera', 'Zhang', 'Kowalski', 'Dubois', 'Silva', 'Tanaka', 'Sterling', 'Vance', 'Mercer', 'Steel', 'Frost', 'Shadow', 'Light', 'Byte', 'Cipher', 'Voss'];
 
 const roles = ['Full Stack Developer', 'Data Scientist', 'AI Researcher', 'UX Designer', 'Product Manager', 'Cybersecurity Analyst', 'Blockchain Architect', 'Cloud Engineer'];
-const companies = ['Google', 'OpenAI', 'Anthropic', 'Meta', 'Netflix', 'Stripe', 'Replit', 'SpaceX', 'Tesla', 'Nvidia', 'Stealth Startup', 'DAO Collective'];
+const companies = ['xAI'];
 
 const skillsList = ['React', 'Python', 'TensorFlow', 'Rust', 'Go', 'Kubernetes', 'Design Systems', 'NLP', 'Computer Vision', 'Smart Contracts', 'GraphQL', 'AWS'];
 
@@ -93,14 +93,7 @@ const journeyNarratives = [
 
 // Define organizations with exact node counts
 const organizations = [
-  { name: 'Google (DeepMind)', count: 6000 },
-  { name: 'OpenAI', count: 5000 },     
-  { name: 'Meta', count: 5000 },        
-  { name: 'Microsoft', count: 4000 },     
-  { name: 'Nvidia', count: 3000 },       
-  { name: 'Anthropic', count: 2300 },
   { name: 'xAI', count: 1200 },
-  { name: 'Amazon', count: 1000 },       
 ];
 
 // Keep locations for backward compatibility (maps to organization name)
@@ -163,9 +156,9 @@ const featuredProfiles = [
   { name: 'Ian Pilon', location: 'xAI', role: 'AI Researcher' },
   { name: 'Elon Musk', location: 'xAI', role: 'CEO' },
   { name: 'Amitav Krishna', location: 'xAI', role: 'Data Scientist' },
-  { name: 'William Suriaputra', location: 'OpenAI', role: 'Full Stack Developer' },
-  { name: 'Prabal Gupta', location: 'Anthropic', role: 'Blockchain Architect' },
-  { name: 'Eden Chan', location: 'Meta', role: 'UX Designer' },
+  { name: 'William Suriaputra', location: 'xAI', role: 'Full Stack Developer' },
+  { name: 'Prabal Gupta', location: 'xAI', role: 'Blockchain Architect' },
+  { name: 'Eden Chan', location: 'xAI', role: 'UX Designer' },
   { name: 'Umesh Khanna', location: 'xAI', role: 'Talent Engineering' },
 ];
 
