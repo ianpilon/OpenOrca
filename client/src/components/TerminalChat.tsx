@@ -86,8 +86,7 @@ export function TerminalChat({ isOpen, onClose }: TerminalChatProps) {
 
   return (
     <div 
-      className="absolute top-14 right-0 w-[420px] bg-[#1a1c23]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden z-50 flex flex-col" 
-      style={{ height: 'calc(100vh - 56px - 16px)' }}
+      className="fixed top-0 bottom-0 right-0 w-[420px] bg-[#1a1c23]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden z-50 flex flex-col" 
       data-testid="terminal-chat"
     >
       {/* Tactical Corner Markers */}
