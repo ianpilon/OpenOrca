@@ -281,7 +281,7 @@ export function LoopVisualization({
                 }}
                 exit={{ opacity: 0, scale: 0 }}
                 whileHover={{ scale: 1.1 }}
-                className={`absolute pointer-events-auto cursor-pointer transition-shadow duration-200 ${getStatusGlow(circle.loop.status)}`}
+                className={`absolute pointer-events-auto cursor-pointer transition-shadow duration-200 rounded-full ${getStatusGlow(circle.loop.status)}`}
                 style={{ 
                   width: circle.radius * 2,
                   height: circle.radius * 2,
