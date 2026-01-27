@@ -37,7 +37,7 @@ export function LoopVisualization({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   const MIN_ZOOM = 0.3;
-  const MAX_ZOOM = 3;
+  const MAX_ZOOM = 1.94;
 
   useEffect(() => {
     const handleResize = () => {
