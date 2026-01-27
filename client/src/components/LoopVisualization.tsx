@@ -235,7 +235,7 @@ export function LoopVisualization({
                     style={{
                       background: `conic-gradient(from 0deg, transparent 0%, ${loopModeColors[circle.loop.mode]}66 25%, transparent 50%, ${loopModeColors[circle.loop.mode]}44 75%, transparent 100%)`,
                     }}
-                    animate={{ rotate: 360 }}
+                    animate={{ rotate: circle.loop.mode === 'reverse' ? -360 : 360 }}
                     transition={{ 
                       duration: spinDuration, 
                       repeat: Infinity, 
@@ -250,7 +250,7 @@ export function LoopVisualization({
                     style={{
                       borderColor: `${loopModeColors[circle.loop.mode]}88`,
                     }}
-                    animate={{ rotate: 360 }}
+                    animate={{ rotate: circle.loop.mode === 'reverse' ? -360 : 360 }}
                     transition={{ 
                       duration: spinDuration * 0.7, 
                       repeat: Infinity, 
