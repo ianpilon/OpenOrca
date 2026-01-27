@@ -18,9 +18,6 @@ interface LoopCircle {
   x: number;
   y: number;
   radius: number;
-  angle: number;
-  orbitRadius: number;
-  speed: number;
 }
 
 export function LoopVisualization({ 
@@ -32,8 +29,6 @@ export function LoopVisualization({
 }: LoopVisualizationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const animationRef = useRef<number | undefined>(undefined);
-  const [time, setTime] = useState(0);
 
   useEffect(() => {
     const handleResize = () => {
@@ -41,20 +36,6 @@ export function LoopVisualization({
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    let lastTime = performance.now();
-    const animate = (currentTime: number) => {
-      const delta = (currentTime - lastTime) / 1000;
-      lastTime = currentTime;
-      setTime(t => t + delta);
-      animationRef.current = requestAnimationFrame(animate);
-    };
-    animationRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
   }, []);
 
   const filteredLoops = useMemo(() => {
@@ -72,31 +53,41 @@ export function LoopVisualization({
     const centerX = dimensions.width / 2;
     const centerY = dimensions.height / 2;
     
-    return filteredLoops.map((loop, index) => {
-      const modeIndex = ['forward', 'reverse', 'system'].indexOf(loop.mode);
-      const baseOrbit = 150 + modeIndex * 120;
-      const angleOffset = (index / filteredLoops.length) * Math.PI * 2;
-      const orbitVariance = (index % 3) * 30;
+    const forwardLoops = filteredLoops.filter(l => l.mode === 'forward');
+    const reverseLoops = filteredLoops.filter(l => l.mode === 'reverse');
+    const systemLoops = filteredLoops.filter(l => l.mode === 'system');
+    
+    const orbits = [
+      { loops: forwardLoops, radius: 150 },
+      { loops: reverseLoops, radius: 270 },
+      { loops: systemLoops, radius: 390 },
+    ];
+    
+    const result: LoopCircle[] = [];
+    
+    orbits.forEach(({ loops: modeLoops, radius }) => {
+      const count = modeLoops.length;
+      if (count === 0) return;
       
-      return {
-        loop,
-        x: centerX,
-        y: centerY,
-        radius: 20 + (loop.wheelSpeed / 100) * 15,
-        angle: angleOffset,
-        orbitRadius: baseOrbit + orbitVariance,
-        speed: loop.wheelSpeed / 50,
-      };
+      const angleStep = (Math.PI * 2) / Math.max(count, 1);
+      const startAngle = -Math.PI / 2;
+      
+      modeLoops.forEach((loop, index) => {
+        const angle = startAngle + index * angleStep;
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        
+        result.push({
+          loop,
+          x,
+          y,
+          radius: 20 + (loop.wheelSpeed / 100) * 15,
+        });
+      });
     });
+    
+    return result;
   }, [filteredLoops, dimensions]);
-
-  const getLoopPosition = (circle: LoopCircle) => {
-    const angle = circle.angle + time * circle.speed;
-    return {
-      x: circle.x + Math.cos(angle) * circle.orbitRadius,
-      y: circle.y + Math.sin(angle) * circle.orbitRadius,
-    };
-  };
 
   const getModeIcon = (mode: LoopMode) => {
     switch (mode) {
@@ -110,6 +101,13 @@ export function LoopVisualization({
     if (status === 'spinning') return 'shadow-[0_0_20px_rgba(34,197,94,0.5)]';
     if (status === 'intervention_required') return 'shadow-[0_0_20px_rgba(245,158,11,0.8)] animate-pulse';
     return '';
+  };
+
+  const getSpinDuration = (wheelSpeed: number) => {
+    const minDuration = 0.5;
+    const maxDuration = 4;
+    const normalized = 1 - (wheelSpeed / 100);
+    return minDuration + normalized * (maxDuration - minDuration);
   };
 
   return (
@@ -157,19 +155,19 @@ export function LoopVisualization({
         ))}
 
         {loopCircles.map((circle, i) => {
-          const pos = getLoopPosition(circle);
-          const nextCircle = loopCircles[(i + 1) % loopCircles.length];
-          const nextPos = getLoopPosition(nextCircle);
+          const nextCircle = loopCircles.find(
+            (c, j) => j > i && c.loop.mode === circle.loop.mode
+          );
           
-          if (circle.loop.mode === nextCircle.loop.mode && i < loopCircles.length - 1) {
+          if (nextCircle) {
             return (
               <line
                 key={`line-${i}`}
-                x1={pos.x}
-                y1={pos.y}
-                x2={nextPos.x}
-                y2={nextPos.y}
-                stroke={`${loopModeColors[circle.loop.mode]}33`}
+                x1={circle.x}
+                y1={circle.y}
+                x2={nextCircle.x}
+                y2={nextCircle.y}
+                stroke={`${loopModeColors[circle.loop.mode]}22`}
                 strokeWidth="1"
               />
             );
@@ -179,11 +177,7 @@ export function LoopVisualization({
       </svg>
 
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <motion.div
-          className="relative"
-          animate={{ rotate: time * 2 }}
-          transition={{ duration: 0, ease: 'linear' }}
-        >
+        <div className="relative">
           <div className="w-24 h-24 rounded-full border border-primary/30 flex items-center justify-center bg-background/50 backdrop-blur-sm">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary font-mono">
@@ -196,14 +190,15 @@ export function LoopVisualization({
           </div>
           <div className="absolute -inset-4 rounded-full border border-dashed border-primary/20 animate-spin" style={{ animationDuration: '20s' }} />
           <div className="absolute -inset-8 rounded-full border border-dotted border-primary/10 animate-spin" style={{ animationDuration: '30s', animationDirection: 'reverse' }} />
-        </motion.div>
+        </div>
       </div>
 
       <AnimatePresence>
         {loopCircles.map((circle) => {
-          const pos = getLoopPosition(circle);
           const isSelected = selectedLoopId === circle.loop.id;
           const isIntervention = circle.loop.interventionRequired;
+          const isSpinning = circle.loop.status === 'spinning';
+          const spinDuration = getSpinDuration(circle.loop.wheelSpeed);
           
           return (
             <motion.div
@@ -212,14 +207,15 @@ export function LoopVisualization({
               animate={{ 
                 opacity: 1, 
                 scale: isSelected ? 1.2 : 1,
-                x: pos.x - circle.radius,
-                y: pos.y - circle.radius,
               }}
               exit={{ opacity: 0, scale: 0 }}
-              className={`absolute pointer-events-auto cursor-pointer transition-all duration-200 ${getStatusGlow(circle.loop.status)}`}
+              whileHover={{ scale: 1.1 }}
+              className={`absolute pointer-events-auto cursor-pointer transition-shadow duration-200 ${getStatusGlow(circle.loop.status)}`}
               style={{ 
                 width: circle.radius * 2,
                 height: circle.radius * 2,
+                left: circle.x - circle.radius,
+                top: circle.y - circle.radius,
               }}
               onClick={() => onLoopClick(circle.loop)}
               data-testid={`loop-${circle.loop.id}`}
@@ -233,15 +229,30 @@ export function LoopVisualization({
                   border: `2px solid ${loopModeColors[circle.loop.mode]}`,
                 }}
               >
-                {circle.loop.status === 'spinning' && (
+                {isSpinning && (
                   <motion.div
                     className="absolute inset-0 rounded-full"
                     style={{
-                      background: `conic-gradient(from 0deg, transparent, ${loopModeColors[circle.loop.mode]}66, transparent)`,
+                      background: `conic-gradient(from 0deg, transparent 0%, ${loopModeColors[circle.loop.mode]}66 25%, transparent 50%, ${loopModeColors[circle.loop.mode]}44 75%, transparent 100%)`,
                     }}
                     animate={{ rotate: 360 }}
                     transition={{ 
-                      duration: 2 / Math.max(circle.speed, 0.1), 
+                      duration: spinDuration, 
+                      repeat: Infinity, 
+                      ease: 'linear' 
+                    }}
+                  />
+                )}
+
+                {isSpinning && (
+                  <motion.div
+                    className="absolute inset-1 rounded-full border-t-2 border-r-2"
+                    style={{
+                      borderColor: `${loopModeColors[circle.loop.mode]}88`,
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ 
+                      duration: spinDuration * 0.7, 
                       repeat: Infinity, 
                       ease: 'linear' 
                     }}
@@ -249,14 +260,14 @@ export function LoopVisualization({
                 )}
                 
                 <span 
-                  className="text-lg font-bold z-10"
+                  className="text-lg font-bold z-10 drop-shadow-lg"
                   style={{ color: loopModeColors[circle.loop.mode] }}
                 >
                   {getModeIcon(circle.loop.mode)}
                 </span>
 
                 <div 
-                  className="absolute bottom-0 left-0 right-0 h-1"
+                  className="absolute bottom-0 left-0 right-0 h-1 z-10"
                   style={{ 
                     background: refinementColors[circle.loop.refinementLevel],
                     opacity: 0.8,
@@ -265,13 +276,13 @@ export function LoopVisualization({
               </div>
 
               {circle.loop.wheelSpeed > 70 && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center z-20">
                   <span className="text-[6px] font-bold text-white">⚡</span>
                 </div>
               )}
 
               {isIntervention && (
-                <div className="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center animate-bounce">
+                <div className="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center animate-bounce z-20">
                   <span className="text-[8px] font-bold text-black">!</span>
                 </div>
               )}
