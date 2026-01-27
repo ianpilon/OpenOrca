@@ -68,6 +68,38 @@
   --radius: 0px;
 }
 
+.light {
+  --background: 210 20% 98%;
+  --foreground: 220 13% 25%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 220 13% 20%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 13% 20%;
+
+  --primary: 200 95% 40%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 350 70% 55%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 210 20% 92%;
+  --muted-foreground: 218 10% 45%;
+
+  --accent: 200 95% 45%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 350 60% 50%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 210 15% 85%;
+  --input: 210 15% 90%;
+  --ring: 200 95% 45%;
+
+  --radius: 0px;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -81,11 +113,29 @@
       linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
     background-size: 100% 100%, 40px 40px, 40px 40px;
   }
+  
+  .light body {
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 60%),
+      linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  }
 }
 
 /* Tactical HUD Elements - Refined */
 .hud-panel {
   @apply bg-[#1a1c23]/90 border border-white/5 backdrop-blur-md relative shadow-lg;
+}
+
+.light .hud-panel {
+  @apply bg-white/95 border-gray-200/80 shadow-md;
+}
+
+.light .hud-corner-tl::before,
+.light .hud-corner-tr::after,
+.light .hud-corner-bl::before,
+.light .hud-corner-br::after {
+  border-color: hsl(var(--primary) / 0.4);
 }
 
 /* Corners are now simpler/cleaner */
@@ -199,9 +249,17 @@
   @apply bg-emerald-500/10 border border-emerald-500/30 text-emerald-400;
 }
 
+.light .autonomous-badge {
+  @apply bg-emerald-500/15 border-emerald-600/40 text-emerald-600;
+}
+
 /* Intervention indicator */
 .intervention-badge {
   @apply bg-amber-500/10 border border-amber-500/30 text-amber-400;
+}
+
+.light .intervention-badge {
+  @apply bg-amber-500/15 border-amber-600/40 text-amber-600;
 }
 
 /* Thread fork styling */
@@ -241,18 +299,34 @@
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
 }
 
+.light .terminal-container {
+  @apply bg-[#1e1e2e] border-gray-300;
+}
+
 .terminal-compact {
   @apply bg-[#0d0f12]/80 border border-white/5 rounded hover:bg-[#0d0f12] transition-colors;
+}
+
+.light .terminal-compact {
+  @apply bg-[#1e1e2e]/90 border-gray-300 hover:bg-[#1e1e2e];
 }
 
 .terminal-header {
   @apply bg-[#151820];
 }
 
+.light .terminal-header {
+  @apply bg-[#2d2d3d];
+}
+
 .terminal-output {
   @apply bg-[#0a0c0f];
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.light .terminal-output {
+  @apply bg-[#1e1e2e];
 }
 
 .terminal-output::-webkit-scrollbar {
@@ -270,6 +344,10 @@
 
 .terminal-input-container {
   @apply bg-[#0d0f12];
+}
+
+.light .terminal-input-container {
+  @apply bg-[#1e1e2e];
 }
 
 .terminal-input {

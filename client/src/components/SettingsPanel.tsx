@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, X, Key, CheckCircle, AlertCircle, 
-  Loader2, Eye, EyeOff, ExternalLink
+  Loader2, Eye, EyeOff, ExternalLink, Sun, Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useApiKey } from '@/hooks/useApiKey';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     clearKey,
     apiKey 
   } = useApiKey();
+  const { theme, setTheme } = useTheme();
   
   const [inputKey, setInputKey] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -54,7 +56,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50"
             onClick={onClose}
           />
           <motion.div
@@ -142,7 +144,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           placeholder="sk-ant-api03-..."
                           value={inputKey}
                           onChange={(e) => setInputKey(e.target.value)}
-                          className="pr-10 font-mono text-xs bg-black/30 border-white/10"
+                          className="pr-10 font-mono text-xs bg-muted border-border"
                           data-testid="api-key-input"
                         />
                         <Button
@@ -197,6 +199,42 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                     Get an API key from Anthropic
                     <ExternalLink className="w-3 h-3" />
                   </a>
+                </div>
+
+                <div className="pt-4 border-t border-white/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    {theme === 'dark' ? (
+                      <Moon className="w-4 h-4 text-purple-400" />
+                    ) : (
+                      <Sun className="w-4 h-4 text-amber-400" />
+                    )}
+                    <h3 className="text-xs font-medium text-foreground uppercase tracking-wider">
+                      Appearance
+                    </h3>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      variant={theme === 'dark' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTheme('dark')}
+                      className="flex-1 text-xs"
+                      data-testid="theme-dark"
+                    >
+                      <Moon className="w-3 h-3 mr-1.5" />
+                      Dark
+                    </Button>
+                    <Button
+                      variant={theme === 'light' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTheme('light')}
+                      className="flex-1 text-xs"
+                      data-testid="theme-light"
+                    >
+                      <Sun className="w-3 h-3 mr-1.5" />
+                      Light
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-white/5">
