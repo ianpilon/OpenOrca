@@ -166,9 +166,8 @@ export function LoopVisualization({
   return (
     <div 
       ref={containerRef}
-      className="absolute inset-0 overflow-hidden"
+      className="absolute inset-0 overflow-hidden loop-canvas-bg"
       style={{ 
-        background: 'radial-gradient(ellipse at center, rgba(22,24,29,1) 0%, rgba(10,12,15,1) 100%)',
         cursor: isPanning ? 'grabbing' : 'grab',
       }}
       onWheel={handleWheel}

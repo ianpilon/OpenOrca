@@ -131,6 +131,14 @@
   @apply bg-white/95 border-gray-200/80 shadow-md;
 }
 
+.loop-canvas-bg {
+  background: radial-gradient(ellipse at center, rgba(22,24,29,1) 0%, rgba(10,12,15,1) 100%);
+}
+
+.light .loop-canvas-bg {
+  background: radial-gradient(ellipse at center, rgba(245,247,250,1) 0%, rgba(230,235,242,1) 100%);
+}
+
 .light .hud-corner-tl::before,
 .light .hud-corner-tr::after,
 .light .hud-corner-bl::before,
