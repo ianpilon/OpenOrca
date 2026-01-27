@@ -19,16 +19,22 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes (January 2026)
 
 - **Complete UI Paradigm Shift**: Transformed from network-graph talent visualization to Loom agents-first infrastructure
+- **Embedded Terminal System**: Claude Code terminal integration across intervention points
+  - `EmbeddedTerminal` - Reusable terminal component with full/compact/inline modes
+  - `useTerminalSession` - Hook for managing terminal state, command history, simulated responses
+  - Integrated into InterventionPanel (primary interface), ThreadInspector (tab view), LoopStream (collapsible per-card)
+- **Pan & Zoom Canvas**: Drag-to-pan and scroll wheel zoom (100%-194% range)
+- **Directional Loop Rotation**: Reverse mode loops spin counter-clockwise
 - **New Components Added**:
   - `LoopVisualization` - Animated loop orbits with wheel-speed indicators
   - `ThreadTimeline` - Audit trail navigation with fork points
-  - `LoopStream` - Real-time loop execution view
-  - `InterventionPanel` - Exception-only human controls
-  - `ThreadInspector` - Detailed loop/thread inspection
+  - `LoopStream` - Real-time loop execution view with inline terminals
+  - `InterventionPanel` - Exception-only human controls with Claude Code terminal
+  - `ThreadInspector` - Detailed loop/thread inspection with terminal tab
   - `RefinementHistory` - Clay metaphor with iteration tracking
   - `SafeguardDashboard` - Push-to-main confidence display
 - **New Data Model**: `loomData.ts` with Ralph loops, threads, weavers, failure domains, safeguards
-- **CSS Animations**: Loop spinning, clay textures, intervention glow effects
+- **CSS Animations**: Loop spinning, clay textures, intervention glow effects, terminal cursor blink
 
 ## System Architecture
 
