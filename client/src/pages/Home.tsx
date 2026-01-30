@@ -1,163 +1,163 @@
 import { useState, useMemo, useCallback } from 'react';
-import { LoopVisualization } from '@/components/LoopVisualization';
-import { ThreadTimeline } from '@/components/ThreadTimeline';
-import { LoopStream } from '@/components/LoopStream';
-import { InterventionPanel } from '@/components/InterventionPanel';
-import { ThreadInspector } from '@/components/ThreadInspector';
-import { RefinementHistory } from '@/components/RefinementHistory';
-import { SafeguardDashboard } from '@/components/SafeguardDashboard';
+import { AgentVisualization } from '@/components/AgentVisualization';
+import { ActionTimeline } from '@/components/ActionTimeline';
+import { AgentStream } from '@/components/AgentStream';
+import { AgentInterventionPanel } from '@/components/AgentInterventionPanel';
+import { AgentInspector } from '@/components/AgentInspector';
+import { SwarmDashboard } from '@/components/SwarmDashboard';
+import { FleetHealthPanel } from '@/components/FleetHealthPanel';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { 
-  generateLoomData, 
-  LoomData, 
-  RalphLoop, 
-  Thread, 
-  ForkPoint 
-} from '@/lib/loomData';
+  generateClawData, 
+  ClawOrchestratorData, 
+  ClawAgent, 
+  AgentTask,
+  ActionEntry,
+  AgentDomain
+} from '@/lib/clawData';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AnimatePresence } from 'framer-motion';
 import { 
-  RefreshCw, Globe, Layers, Shield, 
-  Play, Pause, AlertTriangle, Zap, Settings
+  Globe, Layers, AlertTriangle, Settings, Wifi, WifiOff, Zap
 } from 'lucide-react';
 
-const loomData = generateLoomData();
+const initialData = generateClawData();
 
 export default function Home() {
-  const [data, setData] = useState<LoomData>(loomData);
-  const [selectedLoop, setSelectedLoop] = useState<RalphLoop | null>(null);
-  const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
-  const [filter, setFilter] = useState<'all' | 'interventions' | 'spinning'>('all');
+  const [data, setData] = useState<ClawOrchestratorData>(initialData);
+  const [selectedAgent, setSelectedAgent] = useState<ClawAgent | null>(null);
+  const [selectedTask, setSelectedTask] = useState<AgentTask | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'interventions'>('all');
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const spinningCount = useMemo(() => 
-    data.loops.filter(l => l.status === 'spinning').length, 
-    [data.loops]
+  const activeCount = useMemo(() => 
+    data.agents.filter(a => a.status === 'active').length, 
+    [data.agents]
   );
   
   const interventionCount = useMemo(() => 
-    data.loops.filter(l => l.interventionRequired).length, 
-    [data.loops]
+    data.agents.filter(a => a.interventionRequired).length, 
+    [data.agents]
   );
 
-  const handleLoopSelect = useCallback((loop: RalphLoop) => {
-    setSelectedLoop(loop);
-    const thread = data.threads.find(t => t.id === loop.threadId);
-    setSelectedThread(thread || null);
-  }, [data.threads]);
+  const offlineCount = useMemo(() => 
+    data.agents.filter(a => a.status === 'offline').length, 
+    [data.agents]
+  );
 
-  const handleThreadSelect = useCallback((thread: Thread) => {
-    setSelectedThread(thread);
-    const loop = data.loops.find(l => l.threadId === thread.id);
-    setSelectedLoop(loop || null);
-  }, [data.loops]);
+  const handleAgentSelect = useCallback((agent: ClawAgent) => {
+    setSelectedAgent(agent);
+    const task = data.tasks.find(t => t.id === agent.currentTaskId);
+    setSelectedTask(task || null);
+  }, [data.tasks]);
 
-  const handleRunAnotherLoop = useCallback((loopId: string) => {
+  const handleTaskSelect = useCallback((task: AgentTask) => {
+    setSelectedTask(task);
+    const agent = data.agents.find(a => a.id === task.agentId);
+    setSelectedAgent(agent || null);
+  }, [data.agents]);
+
+  const handleResolveIntervention = useCallback((agentId: string, action: 'approve' | 'deny' | 'later') => {
     setData(prev => ({
       ...prev,
-      loops: prev.loops.map(l => 
-        l.id === loopId 
-          ? { ...l, status: 'spinning' as const, iterationCount: l.iterationCount + 1, wheelSpeed: 60 }
-          : l
-      ),
-    }));
-  }, []);
-
-  const handleResolveIntervention = useCallback((loopId: string, action: 'approve' | 'reject' | 'modify') => {
-    setData(prev => ({
-      ...prev,
-      loops: prev.loops.map(l => 
-        l.id === loopId 
+      agents: prev.agents.map(a => 
+        a.id === agentId 
           ? { 
-              ...l, 
+              ...a, 
               interventionRequired: false, 
               interventionReason: undefined,
-              status: action === 'reject' ? 'failed' as const : 'spinning' as const,
+              status: action === 'deny' ? 'idle' as const : 'active' as const,
             }
-          : l
+          : a
       ),
+      interventions: prev.interventions.filter(i => i.agentId !== agentId),
     }));
   }, []);
 
-  const handleEngineerAway = useCallback((failureDomainId: string) => {
+  const handleWakeAgent = useCallback((agentId: string) => {
     setData(prev => ({
       ...prev,
-      failureDomains: prev.failureDomains.map(fd => 
-        fd.id === failureDomainId 
-          ? { ...fd, engineeredAway: true }
-          : fd
+      agents: prev.agents.map(a => 
+        a.id === agentId 
+          ? { ...a, status: 'active' as const, activityLevel: 60 }
+          : a
       ),
     }));
   }, []);
 
-  const handleForkThread = useCallback((thread: Thread, forkPoint: ForkPoint) => {
-    console.log('Forking thread', thread.id, 'at', forkPoint.id);
-  }, []);
-
-  const handleLoadAsContext = useCallback((thread: Thread) => {
-    console.log('Loading thread as context', thread.id);
-  }, []);
-
-  const handleForkFromInspector = useCallback((threadId: string, decisionId: string) => {
-    console.log('Forking from inspector', threadId, decisionId);
+  const handlePauseAgent = useCallback((agentId: string) => {
+    setData(prev => ({
+      ...prev,
+      agents: prev.agents.map(a => 
+        a.id === agentId 
+          ? { ...a, status: 'idle' as const, activityLevel: 0 }
+          : a
+      ),
+    }));
   }, []);
 
   const closeInspector = useCallback(() => {
-    setSelectedLoop(null);
-    setSelectedThread(null);
+    setSelectedAgent(null);
+    setSelectedTask(null);
   }, []);
 
-  const relevantSafeguards = useMemo(() => {
-    if (!selectedThread) return data.safeguards;
-    return selectedThread.safeguards.length > 0 ? selectedThread.safeguards : data.safeguards;
-  }, [selectedThread, data.safeguards]);
+  const agentActions = useMemo(() => {
+    if (!selectedAgent) return data.actionLog.slice(0, 20);
+    return data.actionLog.filter(a => a.agentId === selectedAgent.id);
+  }, [selectedAgent, data.actionLog]);
 
   return (
     <div className="relative w-full h-screen bg-background overflow-hidden font-sans selection:bg-primary/20">
       
-      <LoopVisualization
-        loops={data.loops}
-        convoys={data.convoys}
-        onLoopClick={handleLoopSelect}
-        selectedLoopId={selectedLoop?.id}
+      <AgentVisualization
+        agents={data.agents}
+        swarms={data.swarms}
+        onAgentClick={handleAgentSelect}
+        selectedAgentId={selectedAgent?.id}
         filter={filter}
       />
 
       <div className="absolute top-0 left-0 right-0 p-6 pointer-events-none flex justify-between items-start z-10 bg-transparent">
         <div className="pointer-events-auto flex items-start gap-6 bg-transparent">
-          <div className="hud-panel p-4 w-72 hud-corner-tl">
+          <div className="hud-panel p-4 w-80 hud-corner-tl">
             <div className="flex items-center gap-3 mb-2">
               <div className="status-indicator" />
-              <span className="hud-text text-primary font-bold">agents-first infrastructure</span>
+              <span className="hud-text text-primary font-bold">openclaw fleet command</span>
             </div>
             <div className="h-px bg-white/5 w-full mb-3" />
-            <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground flex items-center gap-3">
-              <Layers className="h-6 w-6 text-primary" />
-              Claw Orchestrator <span className="text-white/20">V.01</span>
+            <h1 className="text-xl font-bold uppercase tracking-wider text-foreground flex items-center gap-3">
+              <Layers className="h-5 w-5 text-primary" />
+              Claw Orchestrator <span className="text-white/20">V.02</span>
             </h1>
             <p className="hud-text mt-1">
-              Mode: <span className="text-secondary">Ralph Loops</span> // Status: <span className="text-primary">Weaving</span>
+              Fleet: <span className="text-secondary">{data.agents.length} Agents</span> // 
+              Machines: <span className="text-primary">{data.machines.length}</span>
             </p>
           </div>
           
           <div className="hud-panel p-3 flex gap-6 items-center">
             <div className="text-center px-2">
-              <span className="block text-xl font-mono text-foreground">{data.weavers.length}</span>
-              <span className="hud-text">Weavers</span>
-            </div>
-            <div className="w-px h-8 bg-white/5" />
-            <div className="text-center px-2">
-              <span className="block text-xl font-mono text-emerald-500">{spinningCount}</span>
-              <span className="hud-text text-emerald-500/70">Spinning</span>
+              <span className="block text-xl font-mono text-emerald-500">{activeCount}</span>
+              <span className="hud-text text-emerald-500/70 flex items-center gap-1">
+                <Zap className="w-2 h-2" /> Active
+              </span>
             </div>
             <div className="w-px h-8 bg-white/5" />
             <div className="text-center px-2">
               <span className={`block text-xl font-mono ${interventionCount > 0 ? 'text-amber-500' : 'text-muted-foreground'}`}>
                 {interventionCount}
               </span>
-              <span className={`hud-text ${interventionCount > 0 ? 'text-amber-500/70' : ''}`}>
-                Interventions
+              <span className={`hud-text flex items-center gap-1 ${interventionCount > 0 ? 'text-amber-500/70' : ''}`}>
+                <AlertTriangle className="w-2 h-2" /> Waiting
+              </span>
+            </div>
+            <div className="w-px h-8 bg-white/5" />
+            <div className="text-center px-2">
+              <span className={`block text-xl font-mono ${offlineCount > 0 ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                {offlineCount}
+              </span>
+              <span className="hud-text flex items-center gap-1">
+                <WifiOff className="w-2 h-2" /> Offline
               </span>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function Home() {
 
         <div className="pointer-events-auto flex gap-3 items-center">
           <div className="flex gap-1">
-            {(['all', 'spinning', 'interventions'] as const).map((f) => (
+            {(['all', 'active', 'interventions'] as const).map((f) => (
               <Button
                 key={f}
                 variant="ghost"
@@ -179,7 +179,7 @@ export default function Home() {
                 data-testid={`filter-${f}`}
               >
                 {f === 'all' && <Globe className="w-3 h-3 mr-1" />}
-                {f === 'spinning' && <RefreshCw className="w-3 h-3 mr-1" />}
+                {f === 'active' && <Wifi className="w-3 h-3 mr-1" />}
                 {f === 'interventions' && <AlertTriangle className="w-3 h-3 mr-1" />}
                 {f}
               </Button>
@@ -207,52 +207,52 @@ export default function Home() {
         <div className="absolute bottom-12 right-12 w-4 h-4 border-b border-r border-white/10" />
       </div>
 
-      <ThreadTimeline
-        threads={data.threads}
-        selectedThreadId={selectedThread?.id || null}
-        onThreadSelect={handleThreadSelect}
-        onFork={handleForkThread}
-        onLoadAsContext={handleLoadAsContext}
+      <ActionTimeline
+        actions={agentActions}
+        selectedAgentId={selectedAgent?.id || null}
+        agents={data.agents}
+        onAgentSelect={handleAgentSelect}
       />
 
-      <InterventionPanel
-        loops={data.loops}
-        failureDomains={data.failureDomains}
+      <AgentInterventionPanel
+        agents={data.agents}
+        interventions={data.interventions}
         onResolve={handleResolveIntervention}
-        onEngineerAway={handleEngineerAway}
-        onLoopSelect={handleLoopSelect}
+        onAgentSelect={handleAgentSelect}
       />
 
       <div className="absolute bottom-32 right-6 z-10 pointer-events-auto space-y-4">
-        <SafeguardDashboard 
-          systemHealth={data.systemHealth}
-          safeguards={data.safeguards}
+        <FleetHealthPanel 
+          fleetHealth={data.fleetHealth}
+          machines={data.machines}
         />
       </div>
 
       <div className="absolute bottom-8 left-6 z-10 pointer-events-auto">
-        <RefinementHistory 
-          loops={data.loops}
-          onRunAnotherLoop={handleRunAnotherLoop}
+        <SwarmDashboard 
+          swarms={data.swarms}
+          agents={data.agents}
         />
       </div>
 
-      <LoopStream
-        loops={data.loops}
-        onLoopSelect={handleLoopSelect}
-        onRunAnotherLoop={handleRunAnotherLoop}
-        selectedLoopId={selectedLoop?.id}
+      <AgentStream
+        agents={data.agents}
+        tasks={data.tasks}
+        onAgentSelect={handleAgentSelect}
+        onWakeAgent={handleWakeAgent}
+        onPauseAgent={handlePauseAgent}
+        selectedAgentId={selectedAgent?.id}
       />
 
       <AnimatePresence>
-        {selectedLoop && (
-          <ThreadInspector
-            loop={selectedLoop}
-            thread={selectedThread}
-            safeguards={relevantSafeguards}
+        {selectedAgent && (
+          <AgentInspector
+            agent={selectedAgent}
+            task={selectedTask}
+            actions={agentActions}
             onClose={closeInspector}
-            onRunAnotherLoop={handleRunAnotherLoop}
-            onForkThread={handleForkFromInspector}
+            onWakeAgent={handleWakeAgent}
+            onPauseAgent={handlePauseAgent}
           />
         )}
       </AnimatePresence>
