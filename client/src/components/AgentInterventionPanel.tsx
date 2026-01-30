@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ClawAgent, Intervention, domainColors, integrationIcons } from '@/lib/clawData';
+import { ClawAgent, Intervention, domainColors } from '@/lib/clawData';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Check, X, Clock, MessageCircle } from 'lucide-react';
+import { AlertTriangle, Check, X, Clock, ChevronRight } from 'lucide-react';
 import clawAgentImg from '@/assets/images/claw-agent.png';
 
 interface AgentInterventionPanelProps {
@@ -9,15 +9,48 @@ interface AgentInterventionPanelProps {
   interventions: Intervention[];
   onResolve: (agentId: string, action: 'approve' | 'deny' | 'later') => void;
   onAgentSelect: (agent: ClawAgent) => void;
+  isHidden: boolean;
+  onToggleHidden: () => void;
 }
 
 export function AgentInterventionPanel({ 
   agents, 
   interventions, 
   onResolve, 
-  onAgentSelect 
+  onAgentSelect,
+  isHidden,
+  onToggleHidden
 }: AgentInterventionPanelProps) {
   const pendingInterventions = interventions.slice(0, 5);
+
+  if (pendingInterventions.length === 0 && !isHidden) {
+    return null;
+  }
+
+  if (isHidden && pendingInterventions.length > 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="absolute right-6 top-40 z-20 pointer-events-auto"
+      >
+        <Button
+          onClick={onToggleHidden}
+          className="relative h-12 w-12 rounded-full bg-amber-500/20 border border-amber-500/50 hover:bg-amber-500/30"
+          data-testid="show-interventions"
+        >
+          <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-[10px] font-bold text-black"
+          >
+            {pendingInterventions.length}
+          </motion.span>
+        </Button>
+      </motion.div>
+    );
+  }
 
   if (pendingInterventions.length === 0) {
     return null;
@@ -37,9 +70,20 @@ export function AgentInterventionPanel({
               Interventions
             </h3>
           </div>
-          <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-mono">
-            {pendingInterventions.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-mono">
+              {pendingInterventions.length}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              onClick={onToggleHidden}
+              data-testid="hide-interventions"
+            >
+              <ChevronRight className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
 
         <div className="p-2 space-y-2 max-h-96 overflow-y-auto scrollbar-thin">

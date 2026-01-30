@@ -12,13 +12,12 @@ import {
   ClawOrchestratorData, 
   ClawAgent, 
   AgentTask,
-  ActionEntry,
-  AgentDomain
 } from '@/lib/clawData';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence } from 'framer-motion';
 import { 
-  Globe, Layers, AlertTriangle, Settings, Wifi, WifiOff, Zap
+  Globe, Layers, AlertTriangle, Settings, Wifi, WifiOff, Zap,
+  PanelLeft, PanelBottom, Bell
 } from 'lucide-react';
 
 const initialData = generateClawData();
@@ -29,6 +28,10 @@ export default function Home() {
   const [selectedTask, setSelectedTask] = useState<AgentTask | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'interventions'>('all');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  
+  const [timelineCollapsed, setTimelineCollapsed] = useState(false);
+  const [streamMinimized, setStreamMinimized] = useState(false);
+  const [interventionsHidden, setInterventionsHidden] = useState(false);
 
   const activeCount = useMemo(() => 
     data.agents.filter(a => a.status === 'active').length, 
@@ -186,6 +189,46 @@ export default function Home() {
             ))}
           </div>
           
+          <div className="w-px h-6 bg-white/10" />
+          
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTimelineCollapsed(!timelineCollapsed)}
+              className={`h-8 w-8 p-0 ${timelineCollapsed ? 'text-muted-foreground' : 'text-primary'}`}
+              title="Toggle Action Log"
+              data-testid="toggle-timeline-btn"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStreamMinimized(!streamMinimized)}
+              className={`h-8 w-8 p-0 ${streamMinimized ? 'text-muted-foreground' : 'text-primary'}`}
+              title="Toggle Agent Stream"
+              data-testid="toggle-stream-btn"
+            >
+              <PanelBottom className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setInterventionsHidden(!interventionsHidden)}
+              className={`h-8 w-8 p-0 relative ${interventionsHidden ? 'text-muted-foreground' : 'text-primary'}`}
+              title="Toggle Interventions"
+              data-testid="toggle-interventions-btn"
+            >
+              <Bell className="w-4 h-4" />
+              {interventionsHidden && data.interventions.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-amber-500 rounded-full text-[8px] flex items-center justify-center text-black font-bold">
+                  {data.interventions.length}
+                </span>
+              )}
+            </Button>
+          </div>
+          
           <Button
             variant="ghost"
             size="sm"
@@ -212,6 +255,8 @@ export default function Home() {
         selectedAgentId={selectedAgent?.id || null}
         agents={data.agents}
         onAgentSelect={handleAgentSelect}
+        isCollapsed={timelineCollapsed}
+        onToggleCollapse={() => setTimelineCollapsed(!timelineCollapsed)}
       />
 
       <AgentInterventionPanel
@@ -219,6 +264,8 @@ export default function Home() {
         interventions={data.interventions}
         onResolve={handleResolveIntervention}
         onAgentSelect={handleAgentSelect}
+        isHidden={interventionsHidden}
+        onToggleHidden={() => setInterventionsHidden(!interventionsHidden)}
       />
 
       <div className="absolute bottom-32 right-6 z-10 pointer-events-auto space-y-4">
@@ -242,6 +289,8 @@ export default function Home() {
         onWakeAgent={handleWakeAgent}
         onPauseAgent={handlePauseAgent}
         selectedAgentId={selectedAgent?.id}
+        isMinimized={streamMinimized}
+        onToggleMinimize={() => setStreamMinimized(!streamMinimized)}
       />
 
       <AnimatePresence>
