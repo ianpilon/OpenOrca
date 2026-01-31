@@ -291,7 +291,7 @@ export default function Home() {
         />
       </div>
 
-      <div className="absolute bottom-8 left-6 z-10 pointer-events-none">
+      <div className="absolute bottom-44 left-6 z-10 pointer-events-none">
         <SwarmDashboard 
           swarms={data.swarms}
           agents={data.agents}
