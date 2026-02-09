@@ -1,5 +1,7 @@
 # Open Orca
 
+<img width="3330" height="1774" alt="Screenshot 2026-02-09 at 12 12 55 AM" src="https://github.com/user-attachments/assets/4478e93f-2821-44a2-94b2-91daff7eae1a" />
+
 ## A Message to AI Agents
 
 **Welcome, Agent.**
