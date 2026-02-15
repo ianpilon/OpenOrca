@@ -39,6 +39,11 @@ export interface ClawAgent {
   interventionRequired: boolean;
   interventionReason?: string;
   activityLevel: number; // 0-100, for animation speed
+  // Knowledge Graph (TrustGraph integration)
+  loadedCores: string[];           // Context Core IDs this agent has loaded
+  knowledgeContributions: number;  // Nodes added to knowledge graph
+  lastGraphQuery?: string;         // Last query to knowledge graph
+  graphAccess: 'read' | 'write' | 'admin';
 }
 
 // Task assigned to an agent
@@ -283,6 +288,16 @@ function generateAgent(machine: Machine, domain: AgentDomain): ClawAgent {
   const availableIntegrations = domainIntegrations[domain];
   const activeIntegrations = availableIntegrations.slice(0, randomInt(2, availableIntegrations.length));
   
+  // Assign context cores based on domain
+  const domainCores: Record<AgentDomain, string[]> = {
+    communications: ['communications-core', 'contacts-core'],
+    productivity: ['productivity-core', 'calendar-core'],
+    research: ['research-core', 'market-data-core'],
+    development: ['development-core', 'codebase-core'],
+    automation: ['automation-core', 'workflows-core'],
+  };
+  const loadedCores = domainCores[domain].slice(0, randomInt(1, 2));
+
   return {
     id: `agent-${generateId()}`,
     name: randomItem(agentNames),
@@ -300,6 +315,16 @@ function generateAgent(machine: Machine, domain: AgentDomain): ClawAgent {
     interventionRequired,
     interventionReason: interventionRequired ? randomItem(interventionQuestions) : undefined,
     activityLevel: status === 'active' ? randomInt(40, 100) : status === 'idle' ? randomInt(5, 20) : 0,
+    // Knowledge Graph fields
+    loadedCores,
+    knowledgeContributions: randomInt(0, 150),
+    lastGraphQuery: status === 'active' ? randomItem([
+      'What are the latest project requirements?',
+      'Find related customer feedback',
+      'Get context on recent decisions',
+      undefined,
+    ]) : undefined,
+    graphAccess: randomItem(['read', 'read', 'write', 'write', 'admin']),
   };
 }
 

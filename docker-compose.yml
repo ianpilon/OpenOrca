@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # OpenOrca Backend
+  openorca:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://openorca:openorca@postgres:5432/openorca
+      - TRUSTGRAPH_URL=http://trustgraph:8088
+    depends_on:
+      postgres:
+        condition: service_healthy
+      trustgraph:
+        condition: service_started
+
+  # PostgreSQL for OpenOrca (agents, tasks, etc.)
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: openorca
+      POSTGRES_PASSWORD: openorca
+      POSTGRES_DB: openorca
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openorca"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # TrustGraph API Gateway
+  trustgraph:
+    image: trustgraph/api-gateway:latest
+    ports:
+      - "8088:8088"   # API
+      - "8888:8888"   # Workbench UI
+    environment:
+      - GRAPH_STORE_TYPE=cassandra
+      - GRAPH_STORE_HOST=cassandra
+      - VECTOR_STORE_TYPE=qdrant
+      - VECTOR_STORE_HOST=qdrant
+      - OBJECT_STORE_TYPE=garage
+      - OBJECT_STORE_HOST=garage
+      - PULSAR_HOST=pulsar
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      pulsar:
+        condition: service_started
+
+  # Cassandra - Graph Store
+  cassandra:
+    image: cassandra:4.1
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=trustgraph
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # Qdrant - Vector Store
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+
+  # Apache Pulsar - Message Streaming
+  pulsar:
+    image: apachepulsar/pulsar:3.1.0
+    ports:
+      - "6650:6650"
+      - "8080:8080"
+    command: bin/pulsar standalone
+    volumes:
+      - pulsar_data:/pulsar/data
+
+  # Garage - Object Storage (optional, for file ingestion)
+  garage:
+    image: dxflrs/garage:v0.9
+    ports:
+      - "3900:3900"
+      - "3901:3901"
+    volumes:
+      - garage_data:/var/lib/garage
+    environment:
+      - GARAGE_ALLOW_WORLD_READABLE_SECRETS=true
+
+volumes:
+  postgres_data:
+  cassandra_data:
+  qdrant_data:
+  pulsar_data:
+  garage_data:
+
+networks:
+  default:
+    name: openorca-network

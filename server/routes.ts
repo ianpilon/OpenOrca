@@ -3,12 +3,16 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupVoiceWebSocket } from "./voice";
 import Anthropic from "@anthropic-ai/sdk";
+import { knowledgeRoutes } from "./knowledge";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   setupVoiceWebSocket(httpServer);
+
+  // Knowledge Graph API (TrustGraph integration)
+  app.use("/api/knowledge", knowledgeRoutes);
 
   app.post("/api/claude/validate", async (req: Request, res: Response) => {
     const { apiKey } = req.body;
