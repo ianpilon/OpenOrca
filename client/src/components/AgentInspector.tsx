@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ClawAgent, AgentTask, ActionEntry, domainColors, integrationIcons } from '@/lib/clawData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { EmbeddedTerminal } from '@/components/EmbeddedTerminal';
+import { LoopContext } from '@/hooks/useTerminalSession';
 import { 
   X, Play, Pause, Cpu, HardDrive, Clock, CheckCircle, 
-  MessageCircle, Globe, FileText, Terminal
+  MessageCircle, Globe, FileText, Terminal, ChevronDown
 } from 'lucide-react';
 import clawAgentImg from '@/assets/images/claw-agent.png';
 
@@ -25,6 +29,21 @@ export function AgentInspector({
   onWakeAgent,
   onPauseAgent 
 }: AgentInspectorProps) {
+  const [terminalOpen, setTerminalOpen] = useState(false);
+
+  // Build agent context for the terminal
+  const agentContext: LoopContext = {
+    loopId: agent.id,
+    loopName: agent.name,
+    status: agent.status,
+    domain: agent.domain,
+    integrations: agent.integrations,
+    machineName: agent.machineName,
+    activityLevel: agent.activityLevel,
+    currentTask: task?.title,
+    taskProgress: task?.progress,
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 50 }}
@@ -190,6 +209,31 @@ export function AgentInspector({
               ))}
             </div>
           </div>
+
+          {/* Agent Terminal - Collapsible */}
+          <Collapsible open={terminalOpen} onOpenChange={setTerminalOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-2.5 hover:bg-white/5 rounded border border-white/10 transition-colors">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Agent Terminal
+                </span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${terminalOpen ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <div className="rounded-lg overflow-hidden border border-white/10">
+                <EmbeddedTerminal
+                  loopId={agent.id}
+                  loopName={agent.name}
+                  loopContext={agentContext}
+                  mode="compact"
+                  maxHeight="200px"
+                  showHeader={false}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
         <div className="p-3 border-t border-white/5 flex gap-2">

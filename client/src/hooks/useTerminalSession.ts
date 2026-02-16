@@ -15,6 +15,13 @@ export interface LoopContext {
   status?: string;
   iterationCount?: number;
   interventionReason?: string;
+  // Agent-specific fields
+  domain?: string;
+  integrations?: string[];
+  currentTask?: string;
+  taskProgress?: number;
+  machineName?: string;
+  activityLevel?: number;
 }
 
 interface Message {
@@ -107,37 +114,66 @@ export function useTerminalSession(options: UseTerminalSessionOptions = {}) {
     }
 
     if (trimmedCommand.toLowerCase() === 'help') {
-      addLine('system', `Claw Orchestrator Terminal - Claude Code Interface
+      addLine('system', `OpenOrca Agent Terminal
 
 Commands:
   help     - Show this help message
   clear    - Clear terminal history
-  status   - Show current loop status
-  context  - Display loop context
+  status   - Show agent status and current task
+  context  - Display full agent context
   
-Or type any message to chat with Claude about this loop.
+Or type any message to chat with Claude about this agent.
 
-${!getApiKey() ? '⚠️  No API key configured. Go to Settings to add your Anthropic API key.' : '✓ API key configured - Ready to chat with Claude'}`);
+${!getApiKey() ? '⚠️  No API key configured. Go to Settings to add your Anthropic API key.' : '✓ API key configured - Ready to chat'}`);
       return;
     }
 
     if (trimmedCommand.toLowerCase() === 'status') {
-      addLine('system', `Loop: ${loopName || loopId || 'unknown'}
-Status: ${loopContext?.status || 'unknown'}
-Mode: ${loopContext?.mode || 'unknown'}
-Iterations: ${loopContext?.iterationCount || 0}`);
+      const statusLines = [
+        `Agent: ${loopName || loopId || 'unknown'}`,
+        `Status: ${loopContext?.status || 'unknown'}`,
+      ];
+      if (loopContext?.domain) statusLines.push(`Domain: ${loopContext.domain}`);
+      if (loopContext?.currentTask) {
+        statusLines.push(`Task: ${loopContext.currentTask}`);
+        if (loopContext?.taskProgress !== undefined) {
+          statusLines.push(`Progress: ${loopContext.taskProgress}%`);
+        }
+      }
+      if (loopContext?.activityLevel !== undefined) {
+        statusLines.push(`Activity: ${loopContext.activityLevel}%`);
+      }
+      if (loopContext?.mode) statusLines.push(`Mode: ${loopContext.mode}`);
+      if (loopContext?.iterationCount) statusLines.push(`Iterations: ${loopContext.iterationCount}`);
+      addLine('system', statusLines.join('\n'));
       return;
     }
 
     if (trimmedCommand.toLowerCase() === 'context') {
-      addLine('system', `Loop Context:
-  ID: ${loopId || 'N/A'}
-  Name: ${loopName || 'N/A'}
-  Mode: ${loopContext?.mode || 'N/A'}
-  Goal: ${loopContext?.goal || 'N/A'}
-  Status: ${loopContext?.status || 'N/A'}
-  Iterations: ${loopContext?.iterationCount || 0}
-  ${loopContext?.interventionReason ? `Intervention: ${loopContext.interventionReason}` : ''}`);
+      const contextLines = [
+        'Agent Context:',
+        `  ID: ${loopId || 'N/A'}`,
+        `  Name: ${loopName || 'N/A'}`,
+      ];
+      if (loopContext?.machineName) contextLines.push(`  Machine: ${loopContext.machineName}`);
+      if (loopContext?.domain) contextLines.push(`  Domain: ${loopContext.domain}`);
+      if (loopContext?.integrations?.length) {
+        contextLines.push(`  Integrations: ${loopContext.integrations.join(', ')}`);
+      }
+      contextLines.push(`  Status: ${loopContext?.status || 'N/A'}`);
+      if (loopContext?.currentTask) {
+        contextLines.push(`  Current Task: ${loopContext.currentTask}`);
+        if (loopContext?.taskProgress !== undefined) {
+          contextLines.push(`  Task Progress: ${loopContext.taskProgress}%`);
+        }
+      }
+      if (loopContext?.mode) contextLines.push(`  Mode: ${loopContext.mode}`);
+      if (loopContext?.goal) contextLines.push(`  Goal: ${loopContext.goal}`);
+      if (loopContext?.iterationCount) contextLines.push(`  Iterations: ${loopContext.iterationCount}`);
+      if (loopContext?.interventionReason) {
+        contextLines.push(`  Intervention: ${loopContext.interventionReason}`);
+      }
+      addLine('system', contextLines.join('\n'));
       return;
     }
 
