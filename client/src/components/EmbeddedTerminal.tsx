@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, KeyboardEvent, useCallback } from 'react';
 import { useTerminalSession, TerminalLine, LoopContext } from '@/hooks/useTerminalSession';
-import { Terminal, ChevronRight, Loader2, X, Minimize2, Square } from 'lucide-react';
+import { Terminal, ChevronRight, Loader2, X, Minimize2, Square, Info, Activity, Trash2, HelpCircle } from 'lucide-react';
 
 interface EmbeddedTerminalProps {
   loopId?: string;
@@ -79,6 +79,13 @@ export function EmbeddedTerminal({
   const focusInput = () => {
     inputRef.current?.focus();
   };
+
+  // Quick action handler - executes command when button is clicked
+  const handleQuickAction = useCallback((command: string) => {
+    if (!isProcessing) {
+      executeCommand(command);
+    }
+  }, [isProcessing, executeCommand]);
 
   const getLineColor = (type: TerminalLine['type']) => {
     switch (type) {
@@ -181,7 +188,7 @@ export function EmbeddedTerminal({
         {lines.length === 0 && (
           <div className="text-muted-foreground/50 italic">
             {hasApiKey 
-              ? "Type 'help' for commands or ask Claude anything..."
+              ? "Click Status or Context above, or ask Claude anything about this agent..."
               : "No API key configured. Add one in Settings to chat with Claude."}
           </div>
         )}
@@ -199,6 +206,47 @@ export function EmbeddedTerminal({
         ))}
       </div>
 
+      {/* Quick Actions - clickable buttons so users don't need to remember commands */}
+      <div className="terminal-quick-actions flex items-center gap-1.5 px-3 py-1.5 border-t border-white/5 bg-white/[0.02]">
+        <span className="text-[10px] text-muted-foreground/50 mr-1">Quick:</span>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleQuickAction('status'); }}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded transition-colors disabled:opacity-50"
+          title="Show agent status"
+        >
+          <Activity className="w-2.5 h-2.5" />
+          Status
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleQuickAction('context'); }}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded transition-colors disabled:opacity-50"
+          title="Show full agent context"
+        >
+          <Info className="w-2.5 h-2.5" />
+          Context
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleQuickAction('help'); }}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded transition-colors disabled:opacity-50"
+          title="Show help"
+        >
+          <HelpCircle className="w-2.5 h-2.5" />
+          Help
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); clearTerminal(); }}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-gray-400 bg-white/5 hover:bg-white/10 rounded transition-colors disabled:opacity-50"
+          title="Clear terminal"
+        >
+          <Trash2 className="w-2.5 h-2.5" />
+          Clear
+        </button>
+      </div>
+
       <div className="terminal-input-container flex items-center gap-2 px-3 py-2 border-t border-white/5">
         <ChevronRight className="w-3 h-3 text-emerald-400 flex-shrink-0" />
         <input
@@ -208,7 +256,7 @@ export function EmbeddedTerminal({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isProcessing}
-          placeholder={isProcessing ? 'Processing... (Esc to cancel)' : 'Ask Claude or enter command...'}
+          placeholder={isProcessing ? 'Processing... (Esc to cancel)' : 'Ask Claude about this agent...'}
           className="terminal-input flex-1 bg-transparent border-none outline-none text-xs font-mono text-gray-200 placeholder:text-muted-foreground/30"
           autoComplete="off"
           spellCheck={false}
