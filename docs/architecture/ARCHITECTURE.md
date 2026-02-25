@@ -176,6 +176,13 @@ interface ContextCore {
 - Quality evaluation
 - Payment calculation (future)
 
+### Task Execution Engine (Cascading Protocol)
+- Contract-based task orchestration
+- Input/output validation gates
+- Backpressure handling on validation failure
+- Self-testing at each task boundary
+- See: `docs/plans/active/cascading-protocol.md`
+
 ### Intervention Service
 - Request creation
 - Human response handling
@@ -259,6 +266,12 @@ UI → API → Knowledge Service → TrustGraph Client → TrustGraph API
 - Basic knowledge integration
 - Manual agent management
 
+### Phase 1.5: Cascading Protocol
+- Task contract schemas (input/output)
+- Validation gates between tasks
+- Basic backpressure/retry logic
+- Task graph execution engine
+
 ### Phase 2: Economic Layer
 - Cost tracking per agent
 - Revenue tracking
@@ -268,6 +281,7 @@ UI → API → Knowledge Service → TrustGraph Client → TrustGraph API
 - External task sources
 - Quality evaluation
 - Automatic assignment
+- ML-based validation (learn from history)
 
 ### Phase 4: Self-Sustaining
 - Agents pay for compute
