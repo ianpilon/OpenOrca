@@ -1,9 +1,23 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupVoiceWebSocket } from "./voice";
 import Anthropic from "@anthropic-ai/sdk";
 import { knowledgeRoutes } from "./knowledge";
+import { registerAgentSchema, updateAgentStatusSchema } from "@shared/schema";
+
+// WebSocket clients for real-time agent updates
+const agentClients = new Set<WebSocket>();
+
+function broadcastAgentUpdate(type: string, data: any) {
+  const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+  agentClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -11,8 +25,160 @@ export async function registerRoutes(
 ): Promise<Server> {
   setupVoiceWebSocket(httpServer);
 
+  // WebSocket for real-time agent updates
+  const agentWss = new WebSocketServer({ server: httpServer, path: '/ws/agents' });
+  agentWss.on('connection', (ws) => {
+    agentClients.add(ws);
+    ws.on('close', () => agentClients.delete(ws));
+  });
+
   // Knowledge Graph API (TrustGraph integration)
   app.use("/api/knowledge", knowledgeRoutes);
+
+  // ============================================
+  // Agent Registration API
+  // ============================================
+
+  // Register a new agent (or update existing)
+  app.post("/api/agents/register", async (req: Request, res: Response) => {
+    const parsed = registerAgentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid agent data", details: parsed.error.issues });
+    }
+
+    try {
+      const agent = await storage.registerAgent(parsed.data);
+      broadcastAgentUpdate('agent_registered', agent);
+      console.log(`[OpenOrca] Agent registered: ${agent.name} (${agent.id})`);
+      return res.json({ success: true, agent });
+    } catch (error: any) {
+      console.error("[OpenOrca] Agent registration error:", error.message);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all registered agents
+  app.get("/api/agents", async (_req: Request, res: Response) => {
+    try {
+      const agents = await storage.getAllAgents();
+      return res.json({ agents });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get a specific agent
+  app.get("/api/agents/:id", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      const agent = await storage.getAgent(id);
+      if (!agent) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+      return res.json({ agent });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update agent status
+  app.put("/api/agents/:id/status", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const parsed = updateAgentStatusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid status update", details: parsed.error.issues });
+    }
+
+    try {
+      const agent = await storage.updateAgentStatus(id, parsed.data);
+      if (!agent) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+      broadcastAgentUpdate('agent_status_changed', agent);
+      return res.json({ success: true, agent });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Agent heartbeat (keep-alive)
+  app.post("/api/agents/:id/heartbeat", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      const agent = await storage.heartbeat(id);
+      if (!agent) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+      return res.json({ success: true, agent });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Remove an agent
+  app.delete("/api/agents/:id", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      const removed = await storage.removeAgent(id);
+      if (!removed) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+      broadcastAgentUpdate('agent_removed', { id });
+      console.log(`[OpenOrca] Agent removed: ${id}`);
+      return res.json({ success: true });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Log an action
+  app.post("/api/agents/:id/action", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { type, description, details, integration, outcome, requiresApproval } = req.body;
+
+    if (!type || !description || !integration) {
+      return res.status(400).json({ error: "Missing required fields: type, description, integration" });
+    }
+
+    try {
+      const action = await storage.logAction({
+        agentId: id,
+        type,
+        description,
+        details,
+        integration,
+        outcome: outcome || 'success',
+        requiresApproval: requiresApproval || false,
+      });
+      broadcastAgentUpdate('action_logged', action);
+      return res.json({ success: true, action });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get action log for an agent
+  app.get("/api/agents/:id/actions", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const limit = parseInt(req.query.limit as string) || 50;
+    try {
+      const actions = await storage.getAgentActions(id, limit);
+      return res.json({ actions });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all actions
+  app.get("/api/actions", async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 100;
+    try {
+      const actions = await storage.getAllActions(limit);
+      return res.json({ actions });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
 
   app.post("/api/claude/validate", async (req: Request, res: Response) => {
     const { apiKey } = req.body;
