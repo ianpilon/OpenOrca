@@ -5,7 +5,10 @@ import { storage } from "./storage";
 import { setupVoiceWebSocket } from "./voice";
 import Anthropic from "@anthropic-ai/sdk";
 import { knowledgeRoutes } from "./knowledge";
-import { registerAgentSchema, updateAgentStatusSchema } from "@shared/schema";
+import { 
+  registerAgentSchema, updateAgentStatusSchema, createTaskSchema,
+  TaskTypeEnum, type TaskType, type Subtask 
+} from "@shared/schema";
 
 // WebSocket clients for real-time agent updates
 const agentClients = new Set<WebSocket>();
@@ -17,6 +20,89 @@ function broadcastAgentUpdate(type: string, data: any) {
       client.send(message);
     }
   });
+}
+
+// Task decomposition - analyzes prompt and breaks into typed subtasks
+async function decomposeTask(prompt: string): Promise<Omit<Subtask, 'id' | 'parentTaskId' | 'createdAt'>[]> {
+  const subtasks: Omit<Subtask, 'id' | 'parentTaskId' | 'createdAt'>[] = [];
+  const promptLower = prompt.toLowerCase();
+  
+  // Pattern matching for task types
+  const patterns: { pattern: RegExp | string[]; type: TaskType; description: string }[] = [
+    { 
+      pattern: ['search', 'find', 'research', 'look up', 'analyze', 'summarize', 'read'],
+      type: 'research',
+      description: 'Research and gather information'
+    },
+    {
+      pattern: ['code', 'write', 'create file', 'fix bug', 'implement', 'debug', 'git', 'commit', 'push', 'deploy'],
+      type: 'development',
+      description: 'Development and code operations'
+    },
+    {
+      pattern: ['send', 'message', 'email', 'notify', 'contact', 'reply', 'whatsapp', 'telegram'],
+      type: 'communication',
+      description: 'Send communication'
+    },
+    {
+      pattern: ['schedule', 'automate', 'cron', 'reminder', 'workflow', 'organize', 'file'],
+      type: 'automation',
+      description: 'Automation and file operations'
+    },
+    {
+      pattern: ['coordinate', 'orchestrate', 'manage', 'delegate', 'assign'],
+      type: 'orchestration',
+      description: 'Coordinate multiple agents'
+    },
+  ];
+  
+  let order = 0;
+  const matchedTypes = new Set<TaskType>();
+  
+  // Find matching patterns
+  for (const { pattern, type, description } of patterns) {
+    const matches = Array.isArray(pattern)
+      ? pattern.some(p => promptLower.includes(p))
+      : pattern.test(promptLower);
+    
+    if (matches && !matchedTypes.has(type)) {
+      matchedTypes.add(type);
+      subtasks.push({
+        type,
+        description: `${description}: ${prompt.slice(0, 100)}${prompt.length > 100 ? '...' : ''}`,
+        assignedAgentId: null,
+        status: 'pending',
+        priority: 'medium',
+        order: order++,
+      });
+    }
+  }
+  
+  // If no specific patterns matched, create a general task
+  if (subtasks.length === 0) {
+    subtasks.push({
+      type: 'general',
+      description: prompt,
+      assignedAgentId: null,
+      status: 'pending',
+      priority: 'medium',
+      order: 0,
+    });
+  }
+  
+  // Add synthesis subtask if multiple subtasks (orchestration needed)
+  if (subtasks.length > 1) {
+    subtasks.push({
+      type: 'orchestration',
+      description: 'Synthesize results from all subtasks',
+      assignedAgentId: null,
+      status: 'pending',
+      priority: 'medium',
+      order: order++,
+    });
+  }
+  
+  return subtasks;
 }
 
 export async function registerRoutes(
@@ -175,6 +261,148 @@ export async function registerRoutes(
     try {
       const actions = await storage.getAllActions(limit);
       return res.json({ actions });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================
+  // Task Routing & Orchestration API
+  // ============================================
+
+  // Create a new task (with automatic decomposition)
+  app.post("/api/tasks", async (req: Request, res: Response) => {
+    const parsed = createTaskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid task data", details: parsed.error.issues });
+    }
+
+    try {
+      const task = await storage.createTask(parsed.data);
+      
+      // Auto-decompose the task into subtasks based on prompt analysis
+      const subtasks = await decomposeTask(task.prompt);
+      if (subtasks.length > 0) {
+        await storage.addSubtasksToTask(task.id, subtasks);
+      }
+      
+      // Auto-route subtasks to available agents
+      const updatedTask = await storage.getTask(task.id);
+      if (updatedTask) {
+        for (const subtask of updatedTask.subtasks) {
+          const agent = await storage.findAgentForTaskType(subtask.type);
+          if (agent) {
+            await storage.assignSubtaskToAgent(task.id, subtask.id, agent.id);
+          }
+        }
+      }
+      
+      const finalTask = await storage.getTask(task.id);
+      broadcastAgentUpdate('task_created', finalTask);
+      console.log(`[OpenOrca] Task created: ${task.id} with ${finalTask?.subtasks.length || 0} subtasks`);
+      
+      return res.json({ success: true, task: finalTask });
+    } catch (error: any) {
+      console.error("[OpenOrca] Task creation error:", error.message);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all tasks
+  app.get("/api/tasks", async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 50;
+    try {
+      const tasks = await storage.getAllTasks(limit);
+      return res.json({ tasks });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get a specific task
+  app.get("/api/tasks/:id", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      const task = await storage.getTask(id);
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+      return res.json({ task });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update task status
+  app.put("/api/tasks/:id/status", async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status, result } = req.body;
+    
+    try {
+      const task = await storage.updateTaskStatus(id, status, result);
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+      broadcastAgentUpdate('task_status_changed', task);
+      return res.json({ success: true, task });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update a subtask
+  app.put("/api/tasks/:taskId/subtasks/:subtaskId", async (req: Request, res: Response) => {
+    const { taskId, subtaskId } = req.params;
+    const update = req.body;
+    
+    try {
+      const task = await storage.updateSubtask(taskId, subtaskId, update);
+      if (!task) {
+        return res.status(404).json({ error: "Task or subtask not found" });
+      }
+      broadcastAgentUpdate('subtask_updated', { task, subtaskId });
+      return res.json({ success: true, task });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Manually assign a subtask to an agent
+  app.post("/api/tasks/:taskId/subtasks/:subtaskId/assign", async (req: Request, res: Response) => {
+    const { taskId, subtaskId } = req.params;
+    const { agentId } = req.body;
+    
+    if (!agentId) {
+      return res.status(400).json({ error: "agentId is required" });
+    }
+    
+    try {
+      const task = await storage.assignSubtaskToAgent(taskId, subtaskId, agentId);
+      if (!task) {
+        return res.status(404).json({ error: "Task or subtask not found" });
+      }
+      broadcastAgentUpdate('subtask_assigned', { task, subtaskId, agentId });
+      return res.json({ success: true, task });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Route a task type to find best agent
+  app.get("/api/routing/:taskType", async (req: Request, res: Response) => {
+    const { taskType } = req.params;
+    const parsed = TaskTypeEnum.safeParse(taskType);
+    
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid task type", validTypes: TaskTypeEnum.options });
+    }
+    
+    try {
+      const agent = await storage.findAgentForTaskType(parsed.data);
+      if (!agent) {
+        return res.json({ agent: null, message: "No suitable agent found" });
+      }
+      return res.json({ agent });
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }

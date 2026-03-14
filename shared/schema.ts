@@ -100,3 +100,90 @@ export const actionEntrySchema = z.object({
 });
 
 export type ActionEntry = z.infer<typeof actionEntrySchema>;
+
+// ============================================
+// Task Routing & Orchestration System
+// ============================================
+
+// Task priority and status
+export const TaskPriorityEnum = z.enum(['low', 'medium', 'high', 'critical']);
+export const TaskStatusEnum = z.enum(['pending', 'assigned', 'in_progress', 'waiting_approval', 'completed', 'failed', 'cancelled']);
+export const TaskTypeEnum = z.enum([
+  'research',      // Web search, data gathering, analysis
+  'development',   // Code writing, debugging, git operations
+  'communication', // Messaging, email, notifications
+  'automation',    // Cron jobs, file operations, workflows
+  'orchestration', // Multi-agent coordination
+  'general',       // Catch-all
+]);
+
+export type TaskPriority = z.infer<typeof TaskPriorityEnum>;
+export type TaskStatus = z.infer<typeof TaskStatusEnum>;
+export type TaskType = z.infer<typeof TaskTypeEnum>;
+
+// Subtask schema (for decomposed tasks)
+export const subtaskSchema = z.object({
+  id: z.string(),
+  parentTaskId: z.string(),
+  type: TaskTypeEnum,
+  description: z.string(),
+  assignedAgentId: z.string().nullable(),
+  status: TaskStatusEnum,
+  priority: TaskPriorityEnum,
+  input: z.string().optional(),
+  output: z.string().optional(),
+  createdAt: z.string(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
+  order: z.number(), // Execution order
+});
+
+export type Subtask = z.infer<typeof subtaskSchema>;
+
+// Main task schema
+export const taskSchema = z.object({
+  id: z.string(),
+  prompt: z.string(),                    // Original user input
+  goal: z.string(),                      // Extracted goal
+  status: TaskStatusEnum,
+  priority: TaskPriorityEnum,
+  subtasks: z.array(subtaskSchema),
+  coordinatorAgentId: z.string(),        // Who manages this task
+  createdAt: z.string(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
+  result: z.string().optional(),         // Final synthesized result
+  escalatedToHuman: z.boolean().default(false),
+  escalationReason: z.string().optional(),
+});
+
+export type Task = z.infer<typeof taskSchema>;
+
+// Create task input
+export const createTaskSchema = z.object({
+  prompt: z.string().min(1),
+  priority: TaskPriorityEnum.default('medium'),
+  coordinatorAgentId: z.string().optional(), // Defaults to first orchestration agent
+});
+
+export type CreateTaskInput = z.infer<typeof createTaskSchema>;
+
+// Task routing rules - which domains handle which task types
+export const routingRulesSchema = z.object({
+  taskType: TaskTypeEnum,
+  preferredDomains: z.array(AgentDomainEnum),
+  requiredIntegrations: z.array(IntegrationEnum).optional(),
+  fallbackDomain: AgentDomainEnum,
+});
+
+export type RoutingRule = z.infer<typeof routingRulesSchema>;
+
+// Default routing rules
+export const DEFAULT_ROUTING_RULES: RoutingRule[] = [
+  { taskType: 'research', preferredDomains: ['research'], requiredIntegrations: ['browser'], fallbackDomain: 'research' },
+  { taskType: 'development', preferredDomains: ['development'], requiredIntegrations: ['terminal', 'github'], fallbackDomain: 'development' },
+  { taskType: 'communication', preferredDomains: ['communications'], requiredIntegrations: ['whatsapp', 'email'], fallbackDomain: 'communications' },
+  { taskType: 'automation', preferredDomains: ['automation'], requiredIntegrations: ['files'], fallbackDomain: 'automation' },
+  { taskType: 'orchestration', preferredDomains: ['orchestration'], fallbackDomain: 'orchestration' },
+  { taskType: 'general', preferredDomains: ['orchestration', 'research'], fallbackDomain: 'orchestration' },
+];
